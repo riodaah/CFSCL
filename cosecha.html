@@ -1,0 +1,1126 @@
+<title>Cosecha CFSCL</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<style>
+:root{
+  --ground:#F6F7F3;
+  --surface:#FFFFFF;
+  --surface-2:#EFF1EB;
+  --line:#DDE1D7;
+  --line-soft:#E8EBE3;
+  --ink:#17211B;
+  --ink-2:#3C4941;
+  --muted:#6E7A70;
+  --accent:#7A2B3A;
+  --accent-soft:#F3E4E7;
+  --ok:#2E7D5B;
+  --ok-soft:#E2F0E9;
+  --warn:#9A6A15;
+  --warn-soft:#F6ECD8;
+  --crit:#A3342C;
+  --crit-soft:#F7E3E1;
+  --c1:#A8384C;
+  --c2:#2F7FBF;
+  --grid:#E4E7DF;
+  --shadow:0 1px 2px rgba(23,33,27,.06), 0 8px 24px rgba(23,33,27,.05);
+  --shadow-lift:0 2px 6px rgba(23,33,27,.10), 0 18px 40px rgba(23,33,27,.12);
+  --r:10px;
+  --sans:"Public Sans","Helvetica Neue",Arial,sans-serif;
+  --display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --mono:"IBM Plex Mono","SFMono-Regular",Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#121713;
+    --surface:#1A211C;
+    --surface-2:#212A23;
+    --line:#2E3830;
+    --line-soft:#262F28;
+    --ink:#EBEFE9;
+    --ink-2:#C3CDC4;
+    --muted:#8E9A90;
+    --accent:#E2899A;
+    --accent-soft:#3A222A;
+    --ok:#63BE94;
+    --ok-soft:#1E3830;
+    --warn:#D9AB5A;
+    --warn-soft:#3A2F18;
+    --crit:#E08076;
+    --crit-soft:#3A211E;
+    --c1:#D0607A;
+    --c2:#4595D0;
+    --grid:#2A342C;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.3);
+    --shadow-lift:0 2px 6px rgba(0,0,0,.5), 0 18px 40px rgba(0,0,0,.45);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#121713;
+  --surface:#1A211C;
+  --surface-2:#212A23;
+  --line:#2E3830;
+  --line-soft:#262F28;
+  --ink:#EBEFE9;
+  --ink-2:#C3CDC4;
+  --muted:#8E9A90;
+  --accent:#E2899A;
+  --accent-soft:#3A222A;
+  --ok:#63BE94;
+  --ok-soft:#1E3830;
+  --warn:#D9AB5A;
+  --warn-soft:#3A2F18;
+  --crit:#E08076;
+  --crit-soft:#3A211E;
+  --c1:#D0607A;
+  --c2:#4595D0;
+  --grid:#2A342C;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.3);
+  --shadow-lift:0 2px 6px rgba(0,0,0,.5), 0 18px 40px rgba(0,0,0,.45);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:var(--sans); font-size:14px; line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+@media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important}}
+
+/* ---------- shell ---------- */
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+.side{
+  background:var(--surface);border-right:1px solid var(--line);
+  display:flex;flex-direction:column;gap:26px;padding:20px 16px;
+}
+.brand{display:flex;align-items:center;gap:10px}
+.mark{
+  width:40px;height:40px;border-radius:9px;background:#fff;flex:none;
+  display:grid;place-items:center;padding:3px;border:1px solid var(--line);
+}
+.mark img{width:100%;height:auto;display:block}
+.brand b{font-family:var(--display);font-size:16px;letter-spacing:-.01em;display:block;line-height:1.2}
+.brand span{font-size:11px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.navlabel{
+  font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);
+  padding:0 10px;margin-bottom:8px;font-weight:600;
+}
+.nav{display:flex;flex-direction:column;gap:3px}
+.nav button{
+  display:flex;align-items:center;gap:10px;width:100%;text-align:left;
+  padding:9px 10px;border:0;border-radius:8px;background:transparent;color:var(--ink-2);
+  font-weight:500;transition:background .15s,color .15s;
+}
+.nav button:hover{background:var(--surface-2)}
+.nav button[aria-current="true"]{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.nav svg{width:17px;height:17px;flex:none}
+.side-foot{margin-top:auto;border-top:1px solid var(--line-soft);padding-top:14px}
+.season{
+  background:var(--surface-2);border-radius:8px;padding:10px 12px;
+}
+.season em{
+  font-style:normal;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);
+  display:block;margin-bottom:3px;font-weight:600;
+}
+.season strong{font-family:var(--display);font-size:15px}
+.season small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+
+.main{display:flex;flex-direction:column;min-width:0}
+.topbar{
+  display:flex;align-items:center;gap:16px;padding:16px 24px;
+  border-bottom:1px solid var(--line);background:var(--surface);
+}
+.topbar h1{font-family:var(--display);font-size:19px;font-weight:600;margin:0;letter-spacing:-.01em}
+.topbar p{margin:2px 0 0;color:var(--muted);font-size:12.5px}
+.topbar .spacer{flex:1}
+.demo-tag{
+  font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;
+  color:var(--warn);background:var(--warn-soft);padding:5px 9px;border-radius:6px;
+}
+.avatar{
+  width:30px;height:30px;border-radius:50%;background:var(--surface-2);border:1px solid var(--line);
+  display:grid;place-items:center;font-size:11.5px;font-weight:600;color:var(--ink-2);
+}
+.view{padding:20px 24px 30px;min-width:0}
+.view[hidden]{display:none}
+
+/* ---------- kpi ---------- */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:13px 15px}
+.kpi em{
+  font-style:normal;display:block;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--muted);font-weight:600;margin-bottom:6px;
+}
+.kpi b{font-family:var(--display);font-size:24px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.kpi span{font-size:12px;color:var(--muted);margin-left:5px}
+
+/* ---------- kanban ---------- */
+.board{display:grid;grid-template-columns:repeat(4,minmax(230px,1fr));gap:12px;overflow-x:auto;padding-bottom:6px}
+.col{background:var(--surface-2);border-radius:var(--r);display:flex;flex-direction:column;min-width:230px}
+.col-head{padding:12px 13px 10px;border-bottom:1px solid var(--line-soft)}
+.rail{height:3px;border-radius:3px;margin-bottom:9px}
+.col-head h2{font-family:var(--display);font-size:13px;font-weight:600;margin:0;letter-spacing:-.005em}
+.col-meta{display:flex;gap:10px;margin-top:5px;font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.col-body{padding:10px;display:flex;flex-direction:column;gap:9px;min-height:120px;flex:1;transition:background .15s}
+.col-body.over{background:var(--accent-soft)}
+.card{
+  background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:11px 12px;
+  cursor:grab;box-shadow:var(--shadow);transition:box-shadow .15s,transform .15s;
+  display:flex;flex-direction:column;gap:8px;
+}
+.card:hover{box-shadow:var(--shadow-lift);transform:translateY(-1px)}
+.card.dragging{opacity:.45;cursor:grabbing}
+.card-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.card h3{font-family:var(--display);font-size:13.5px;font-weight:600;margin:0;letter-spacing:-.005em}
+.card .op{font-family:var(--mono);font-size:10px;color:var(--muted);white-space:nowrap}
+.dest{font-size:11.5px;color:var(--muted);display:flex;align-items:center;gap:5px}
+.prod{font-size:12.5px;color:var(--ink-2);border-left:2px solid var(--line);padding-left:8px}
+.prod b{font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{
+  font-size:10.5px;font-weight:600;padding:3px 7px;border-radius:5px;
+  background:var(--surface-2);color:var(--ink-2);letter-spacing:.02em;
+}
+.chip.q{background:var(--ok-soft);color:var(--ok)}
+.chip.cal{font-family:var(--mono);font-weight:500}
+.card-foot{
+  display:flex;justify-content:space-between;align-items:center;
+  border-top:1px solid var(--line-soft);padding-top:8px;font-variant-numeric:tabular-nums;
+}
+.cont{font-family:var(--display);font-size:14px;font-weight:600}
+.cont span{font-size:11px;color:var(--muted);font-weight:500;font-family:var(--sans);margin-left:3px}
+.fob{font-size:12px;color:var(--muted);font-family:var(--mono)}
+
+/* ---------- inventory ---------- */
+.bodegas{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.btab{
+  background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 13px;
+  display:flex;flex-direction:column;gap:1px;min-width:150px;text-align:left;transition:border-color .15s;
+}
+.btab:hover{border-color:var(--muted)}
+.btab[aria-current="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.btab b{font-family:var(--display);font-size:13px;font-weight:600}
+.btab small{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+.btab[aria-current="true"] b{color:var(--accent)}
+.btn{
+  border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:9px 13px;
+  font-weight:600;font-size:12.5px;display:inline-flex;align-items:center;gap:6px;transition:background .15s,border-color .15s;
+}
+.btn:hover{background:var(--surface-2)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+:root[data-theme="dark"] .btn.primary,:root:not([data-theme="light"]) .btn.primary{color:#17211B}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]) .btn.primary{color:#fff}}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.dashed{border-style:dashed;color:var(--muted);font-weight:500}
+
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.panel-head{
+  display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid var(--line);
+}
+.panel-head h2{font-family:var(--display);font-size:14.5px;font-weight:600;margin:0}
+.panel-head .spacer{flex:1}
+.filters{display:flex;gap:6px}
+.filters button{
+  border:0;background:transparent;color:var(--muted);font-size:12px;font-weight:500;
+  padding:5px 9px;border-radius:6px;
+}
+.filters button:hover{background:var(--surface-2)}
+.filters button[aria-pressed="true"]{background:var(--surface-2);color:var(--ink);font-weight:600}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:720px}
+th{
+  text-align:left;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);
+  font-weight:600;padding:10px 16px;border-bottom:1px solid var(--line);white-space:nowrap;
+}
+th.num,td.num{text-align:right}
+td{padding:11px 16px;border-bottom:1px solid var(--line-soft);vertical-align:middle}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:hover{background:var(--surface-2)}
+.pname{font-weight:600;font-family:var(--display);font-size:13.5px}
+.pvar{font-size:12px;color:var(--muted)}
+.num{font-variant-numeric:tabular-nums;font-family:var(--mono);font-size:13px}
+.cajas{display:block;font-size:10.5px;color:var(--muted);font-family:var(--sans)}
+.meter{width:96px;height:5px;border-radius:3px;background:var(--line);overflow:hidden;margin-top:5px}
+.meter i{display:block;height:100%;background:var(--warn)}
+.state{font-size:11px;font-weight:600;padding:3px 8px;border-radius:5px;white-space:nowrap}
+.state.ok{background:var(--ok-soft);color:var(--ok)}
+.state.warn{background:var(--warn-soft);color:var(--warn)}
+.state.crit{background:var(--crit-soft);color:var(--crit)}
+
+/* ---------- drawer ---------- */
+.scrim{position:fixed;inset:0;background:rgba(20,28,23,.42);opacity:0;pointer-events:none;transition:opacity .2s;z-index:40}
+.scrim.open{opacity:1;pointer-events:auto}
+.drawer{
+  position:fixed;top:0;right:0;bottom:0;width:min(400px,92vw);background:var(--surface);
+  border-left:1px solid var(--line);z-index:50;transform:translateX(100%);transition:transform .24s ease;
+  display:flex;flex-direction:column;
+}
+.drawer.open{transform:none}
+.drawer-head{padding:18px 20px 14px;border-bottom:1px solid var(--line)}
+.drawer-head .op{font-family:var(--mono);font-size:11px;color:var(--accent);font-weight:500}
+.drawer-head h2{font-family:var(--display);font-size:19px;margin:5px 0 3px;font-weight:600;letter-spacing:-.015em}
+.drawer-head p{margin:0;color:var(--muted);font-size:12.5px}
+.drawer-body{padding:18px 20px;overflow-y:auto;display:flex;flex-direction:column;gap:18px}
+.dl{display:grid;grid-template-columns:auto 1fr;gap:9px 16px;font-size:13px}
+.dl dt{color:var(--muted);font-size:12px}
+.dl dd{margin:0;font-weight:500;text-align:right;font-variant-numeric:tabular-nums}
+.block em{
+  font-style:normal;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);
+  font-weight:600;display:block;margin-bottom:9px;
+}
+.stageline{display:flex;gap:4px}
+.stageline div{flex:1;height:4px;border-radius:3px;background:var(--line)}
+.timeline{display:flex;flex-direction:column;gap:11px;font-size:12.5px}
+.tl{display:flex;gap:10px;align-items:flex-start}
+.tl i{width:7px;height:7px;border-radius:50%;background:var(--accent);margin-top:5px;flex:none}
+.tl span{display:block;color:var(--muted);font-size:11.5px}
+.drawer-foot{margin-top:auto;border-top:1px solid var(--line);padding:14px 20px;display:flex;gap:8px}
+.close{border:0;background:var(--surface-2);border-radius:7px;width:28px;height:28px;line-height:1;font-size:16px;color:var(--muted)}
+
+/* ---------- form ---------- */
+.form{padding:16px;background:var(--surface-2);border-bottom:1px solid var(--line);display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:10px;align-items:end}
+.form[hidden]{display:none}
+.field label{display:block;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:5px}
+.field input,.field select{
+  width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:7px;
+  background:var(--surface);color:var(--ink);font:inherit;font-size:13px;
+}
+.toast{
+  position:fixed;left:50%;bottom:26px;transform:translate(-50%,14px);z-index:60;
+  background:var(--ink);color:var(--ground);padding:11px 17px;border-radius:9px;font-size:13px;font-weight:500;
+  box-shadow:var(--shadow-lift);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;max-width:88vw;
+}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.hint{font-size:12px;color:var(--muted);margin:14px 2px 0;display:flex;align-items:center;gap:7px}
+.hint b{color:var(--ink-2);font-weight:600}
+
+/* ---------- reportes ---------- */
+.reports{display:flex;flex-direction:column;gap:18px}
+.panel-body{padding:16px}
+.legend{display:flex;gap:14px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--ink-2)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.swatch{width:10px;height:10px;border-radius:3px;display:inline-block}
+.chartwrap{overflow-x:auto}
+.chartwrap svg{display:block;min-width:520px;width:100%;height:auto}
+.axis-txt{font-family:var(--sans);font-size:11px;fill:var(--muted)}
+.axis-txt.strong{fill:var(--ink-2);font-weight:600}
+.val-txt{font-family:var(--mono);font-size:10.5px;fill:var(--muted)}
+.gridline{stroke:var(--grid);stroke-width:1}
+.bar{transition:opacity .12s}
+.bar:hover{opacity:.82;cursor:pointer}
+.tip{
+  position:fixed;z-index:70;background:var(--ink);color:var(--ground);border-radius:8px;
+  padding:9px 11px;font-size:12px;pointer-events:none;opacity:0;transition:opacity .12s;
+  box-shadow:var(--shadow-lift);max-width:230px;
+}
+.tip.show{opacity:1}
+.tip b{display:block;font-family:var(--display);font-size:12.5px;margin-bottom:4px}
+.tip i{font-style:normal;font-variant-numeric:tabular-nums;font-family:var(--mono)}
+.alerts{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+.alert{
+  display:block;padding:10px 12px;border-radius:8px;line-height:1.45;
+  background:var(--warn-soft);font-size:12.5px;color:var(--ink-2);
+}
+.alert.crit{background:var(--crit-soft)}
+.alert b{font-weight:600}
+.two{display:grid;grid-template-columns:1fr 300px;gap:16px;align-items:start}
+.summary{display:flex;flex-direction:column;gap:12px}
+.hero{background:var(--surface-2);border-radius:9px;padding:14px 15px}
+.hero em{font-style:normal;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:600;display:block;margin-bottom:6px}
+.hero b{font-family:var(--display);font-size:30px;font-weight:600;letter-spacing:-.02em;display:block;font-variant-numeric:tabular-nums}
+.hero small{color:var(--muted);font-size:12px}
+.mini{display:flex;justify-content:space-between;font-size:12.5px;padding:7px 0;border-bottom:1px solid var(--line-soft)}
+.mini:last-child{border-bottom:0}
+.mini span{color:var(--muted)}
+.mini b{font-variant-numeric:tabular-nums;font-family:var(--mono);font-weight:500}
+
+/* ---------- ingreso operador ---------- */
+.opwrap{max-width:1000px;display:grid;grid-template-columns:1fr 320px;gap:16px;align-items:start}
+.opform{display:flex;flex-direction:column;gap:15px;padding:18px}
+.opgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.bigfield label{display:block;font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:6px}
+.bigfield input,.bigfield select{
+  width:100%;padding:13px 12px;border:1px solid var(--line);border-radius:9px;
+  background:var(--ground);color:var(--ink);font:inherit;font-size:15px;
+}
+.bigfield input:focus,.bigfield select:focus{border-color:var(--accent);outline:none}
+.stepper{display:flex;align-items:center;gap:8px}
+.stepper button{
+  width:46px;height:46px;border-radius:9px;border:1px solid var(--line);background:var(--ground);
+  font-size:20px;font-family:var(--display);color:var(--ink-2);flex:none;
+}
+.stepper button:hover{background:var(--surface-2)}
+.stepper input{text-align:center;font-family:var(--mono);font-size:19px;font-weight:600}
+.opsubmit{padding:15px;font-size:15px;border-radius:9px;justify-content:center}
+.oplog{display:flex;flex-direction:column}
+.oplog-item{display:flex;gap:11px;padding:11px 15px;border-bottom:1px solid var(--line-soft);font-size:12.5px}
+.oplog-item:last-child{border-bottom:0}
+.oplog-item i{width:6px;height:6px;border-radius:50%;background:var(--ok);margin-top:6px;flex:none}
+.oplog-item b{display:block;font-weight:600;font-family:var(--display);font-size:13px}
+.oplog-item span{color:var(--muted);font-size:11.5px}
+.oplog-empty{padding:22px 15px;color:var(--muted);font-size:12.5px}
+
+@media (max-width:900px){
+  .two,.opwrap{grid-template-columns:1fr}
+  .app{grid-template-columns:1fr}
+  .side{flex-direction:row;align-items:center;gap:16px;padding:12px 16px;border-right:0;border-bottom:1px solid var(--line);overflow-x:auto}
+  .navlabel,.side-foot{display:none}
+  .nav{flex-direction:row}
+  .kpis{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+
+<div class="app">
+  <aside class="side">
+    <div class="brand">
+      <div class="mark"><img src="data:image/png;base64,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" alt="Central Frutícola Sur"></div>
+      <div><b>Cosecha</b><span>Central Frutícola Sur</span></div>
+    </div>
+
+    <div>
+      <p class="navlabel">Módulos</p>
+      <nav class="nav">
+        <button data-view="crm" aria-current="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="5" height="16" rx="1.5"/><rect x="9.5" y="4" width="5" height="10" rx="1.5"/><rect x="16" y="4" width="5" height="13" rx="1.5"/></svg>
+          Embudo comercial
+        </button>
+        <button data-view="inv">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9.5 12 4l9 5.5V20H3z"/><path d="M9 20v-6h6v6"/></svg>
+          Inventario
+        </button>
+        <button data-view="rep">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+          Reportes
+        </button>
+        <button data-view="ing">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="7" width="16" height="13" rx="2"/><path d="M12 4v7M9 8.5 12 11l3-2.5"/></svg>
+          Ingreso en bodega
+        </button>
+      </nav>
+    </div>
+
+    <div class="side-foot">
+      <div class="season">
+        <em>Temporada</em>
+        <strong>2027</strong>
+        <small>Programa 400 contenedores</small>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div>
+        <h1 id="viewTitle">Embudo comercial</h1>
+        <p id="viewSub">Arrastra una tarjeta entre etapas o ábrela para ver el detalle del trato.</p>
+      </div>
+      <div class="spacer"></div>
+      <span class="demo-tag">Datos de ejemplo</span>
+      <div class="avatar">FM</div>
+    </header>
+
+    <!-- ============ CRM ============ -->
+    <section class="view" id="view-crm">
+      <div class="kpis" id="crmKpis"></div>
+      <div class="board" id="board"></div>
+      <p class="hint">
+        <b>Integración en vivo:</b>&nbsp;al mover un trato a “Finalización del trato”, sus contenedores pasan de disponibles a comprometidos en el módulo de Inventario.
+      </p>
+    </section>
+
+    <!-- ============ INVENTARIO ============ -->
+    <section class="view" id="view-inv" hidden>
+      <div class="bodegas" id="bodegas"></div>
+      <div class="kpis" id="invKpis"></div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h2 id="invPanelTitle">Stock</h2>
+          <div class="filters" id="invFilters"></div>
+          <div class="spacer"></div>
+          <button class="btn primary" id="toggleStockForm">+ Ingresar stock</button>
+        </div>
+
+        <form class="form" id="stockForm" hidden>
+          <div class="field"><label for="f-tipo">Tipo</label>
+            <select id="f-tipo"><option>Manzana</option><option>Cereza</option><option>Uva</option><option>Kiwi</option><option>Arándano</option><option>Ciruela</option></select>
+          </div>
+          <div class="field"><label for="f-var">Variedad</label><input id="f-var" placeholder="Royal Gala" required></div>
+          <div class="field"><label for="f-cal">Calidad</label>
+            <select id="f-cal"><option>Premium</option><option>Categoría I</option><option>Categoría II</option></select>
+          </div>
+          <div class="field"><label for="f-cbr">Calibre</label><input id="f-cbr" placeholder="100" required></div>
+          <div class="field"><label for="f-cont">Contenedores</label><input id="f-cont" type="number" min="1" step="1" value="4" required></div>
+          <button class="btn primary" type="submit">Agregar al stock</button>
+        </form>
+
+        <div class="tablewrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Producto</th><th>Calidad</th><th>Calibre</th>
+                <th class="num">Disponible</th><th class="num">Comprometido</th><th class="num">Total</th><th>Estado</th>
+              </tr>
+            </thead>
+            <tbody id="stockBody"></tbody>
+          </table>
+        </div>
+      </div>
+      <p class="hint"><b>Unidad de control:</b>&nbsp;contenedores, con equivalencia referencial en cajas según formato de embalaje por especie.</p>
+    </section>
+
+    <!-- ============ REPORTES ============ -->
+    <section class="view reports" id="view-rep" hidden>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h2>Proyección de ventas · temporada 2027</h2>
+          <div class="spacer"></div>
+          <div class="legend">
+            <span><i class="swatch" style="background:var(--c1)"></i> Demanda comprometida</span>
+            <span><i class="swatch" style="background:var(--c2)"></i> Fruta proyectada disponible</span>
+          </div>
+        </div>
+        <div class="panel-body two">
+          <div>
+            <div class="chartwrap" id="chartProy"></div>
+            <div class="alerts" id="proyAlerts"></div>
+          </div>
+          <div class="summary">
+            <div class="hero">
+              <em>Cobertura del programa</em>
+              <b id="coberturaVal">—</b>
+              <small id="coberturaSub"></small>
+            </div>
+            <div class="panel" style="padding:4px 14px">
+              <div class="mini"><span>Programa objetivo</span><b>400 cont.</b></div>
+              <div class="mini"><span>Demanda comprometida</span><b id="mDem">—</b></div>
+              <div class="mini"><span>Fruta proyectada</span><b id="mOfe">—</b></div>
+              <div class="mini"><span>Saldo libre de venta</span><b id="mSaldo">—</b></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h2>Razón de pérdida · fruta no exportada</h2>
+          <div class="spacer"></div>
+          <span style="font-size:12px;color:var(--muted)">Acumulado temporada, en cajas</span>
+        </div>
+        <div class="panel-body two">
+          <div class="chartwrap" id="chartMerma"></div>
+          <div class="summary">
+            <div class="hero">
+              <em>Pérdida acumulada</em>
+              <b id="mermaTotal">—</b>
+              <small id="mermaSub"></small>
+            </div>
+            <div class="panel" style="padding:4px 14px" id="mermaList"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ INGRESO EN BODEGA ============ -->
+    <section class="view" id="view-ing" hidden>
+      <div class="opwrap">
+        <form class="panel opform" id="opForm">
+          <div class="bigfield">
+            <label for="o-bodega">Bodega</label>
+            <select id="o-bodega"></select>
+          </div>
+          <div class="opgrid">
+            <div class="bigfield"><label for="o-tipo">Tipo</label>
+              <select id="o-tipo"><option>Manzana</option><option>Cereza</option><option>Uva</option><option>Kiwi</option><option>Arándano</option><option>Ciruela</option></select>
+            </div>
+            <div class="bigfield"><label for="o-var">Variedad</label><input id="o-var" placeholder="Royal Gala" required></div>
+            <div class="bigfield"><label for="o-cal">Calidad</label>
+              <select id="o-cal"><option>Premium</option><option>Categoría I</option><option>Categoría II</option></select>
+            </div>
+            <div class="bigfield"><label for="o-cbr">Calibre</label><input id="o-cbr" placeholder="100" required></div>
+          </div>
+          <div class="bigfield">
+            <label for="o-cont">Contenedores recibidos</label>
+            <div class="stepper">
+              <button type="button" id="o-minus" aria-label="Restar un contenedor">−</button>
+              <input id="o-cont" type="number" min="1" step="1" value="1" required>
+              <button type="button" id="o-plus" aria-label="Sumar un contenedor">+</button>
+            </div>
+          </div>
+          <div class="bigfield">
+            <label for="o-lote">Lote / guía de recepción <span style="text-transform:none;letter-spacing:0">(opcional)</span></label>
+            <input id="o-lote" placeholder="LOT-2027-0148">
+          </div>
+          <button class="btn primary opsubmit" type="submit">Registrar ingreso</button>
+        </form>
+
+        <div class="panel">
+          <div class="panel-head"><h2>Ingresos de hoy</h2></div>
+          <div class="oplog" id="opLog"></div>
+        </div>
+      </div>
+      <p class="hint"><b>Pensado para el operador:</b>&nbsp;campos grandes y contador táctil, para registrar la recepción desde el mismo andén sin pasar por la oficina.</p>
+    </section>
+  </div>
+</div>
+
+<div class="tip" id="tip"></div>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" aria-hidden="true">
+  <div class="drawer-head">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+      <div>
+        <span class="op" id="dOp"></span>
+        <h2 id="dName"></h2>
+        <p id="dDest"></p>
+      </div>
+      <button class="close" id="dClose" aria-label="Cerrar">×</button>
+    </div>
+  </div>
+  <div class="drawer-body">
+    <div class="block">
+      <em>Etapa</em>
+      <div class="stageline" id="dStages"></div>
+      <p style="margin:9px 0 0;font-size:13px;font-weight:600" id="dStageName"></p>
+    </div>
+    <div class="block">
+      <em>Producto solicitado</em>
+      <dl class="dl" id="dProd"></dl>
+    </div>
+    <div class="block">
+      <em>Condiciones comerciales</em>
+      <dl class="dl" id="dComm"></dl>
+    </div>
+    <div class="block">
+      <em>Actividad</em>
+      <div class="timeline" id="dTl"></div>
+    </div>
+  </div>
+  <div class="drawer-foot">
+    <button class="btn primary" id="dAdvance" style="flex:1">Avanzar de etapa</button>
+    <button class="btn" id="dCloseBtn">Cerrar</button>
+  </div>
+</aside>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ---------- datos de ejemplo ----------
+const STAGES = [
+  {id:"recepcion", name:"Recepción de solicitud", color:"#8E9A90"},
+  {id:"evaluacion", name:"Evaluación comercial", color:"#9A6A15"},
+  {id:"oferta",     name:"Generación de oferta",  color:"#2E6E9E"},
+  {id:"cierre",     name:"Finalización del trato", color:"#2E7D5B"}
+];
+
+const CAJAS_POR_CONT = {Manzana:1240, Cereza:4400, Uva:1300, Kiwi:1080, Arándano:5800, Ciruela:1400};
+
+let deals = [
+  {op:"OP-2027-0041", cliente:"Jiaxing Fruit Co.", pais:"Shanghái, China", tipo:"Cereza", variedad:"Lapins", calidad:"Premium", calibre:"J", cont:6, fob:52000, incoterm:"CIF", pago:"30 días B/L", etapa:"recepcion", ejecutivo:"Francisco M.",
+   tl:[["Solicitud recibida por WhatsApp","Hoy, 09:14"],["Cliente pide programa semanal feb–abr","Hoy, 09:20"]]},
+  {op:"OP-2027-0042", cliente:"Golden Dragon Import", pais:"Guangzhou, China", tipo:"Cereza", variedad:"Santina", calidad:"Premium", calibre:"XL", cont:4, fob:48500, incoterm:"CIF", pago:"Carta de crédito", etapa:"recepcion", ejecutivo:"Anita R.",
+   tl:[["Referido por cliente Shenzhen","Ayer, 17:40"]]},
+  {op:"OP-2027-0038", cliente:"Fresh Market Colombia", pais:"Cartagena, Colombia", tipo:"Manzana", variedad:"Royal Gala", calidad:"Categoría I", calibre:"100", cont:8, fob:24500, incoterm:"CFR", pago:"30/60 días", etapa:"evaluacion", ejecutivo:"Francisco M.",
+   tl:[["Solicitud recibida","2 mar"],["Validando disponibilidad de calibre 100","3 mar"]]},
+  {op:"OP-2027-0039", cliente:"Han Kook Fruits", pais:"Busán, Corea del Sur", tipo:"Manzana", variedad:"Fuji", calidad:"Categoría I", calibre:"113", cont:5, fob:26800, incoterm:"FOB", pago:"Anticipo 30%", etapa:"evaluacion", ejecutivo:"Anita R.",
+   tl:[["Solicitud recibida","28 feb"],["Revisión de límite de crédito","4 mar"]]},
+  {op:"OP-2027-0031", cliente:"Euro Fruit Rotterdam", pais:"Rotterdam, Países Bajos", tipo:"Kiwi", variedad:"Hayward", calidad:"Categoría I", calibre:"30", cont:3, fob:22100, incoterm:"CIF", pago:"45 días", etapa:"oferta", ejecutivo:"Francisco M.",
+   tl:[["Oferta enviada","5 mar"],["Cliente solicita ajuste de calibre","6 mar"]]},
+  {op:"OP-2027-0033", cliente:"Pacific Produce LLC", pais:"Filadelfia, EE.UU.", tipo:"Uva", variedad:"Crimson", calidad:"Categoría I", calibre:"XL", cont:6, fob:31200, incoterm:"CIF", pago:"30 días B/L", etapa:"oferta", ejecutivo:"Anita R.",
+   tl:[["Oferta enviada","6 mar"]]},
+  {op:"OP-2027-0022", cliente:"Shenzhen Sunrise Trading", pais:"Shenzhen, China", tipo:"Cereza", variedad:"Regina", calidad:"Premium", calibre:"XL", cont:10, fob:54000, incoterm:"CIF", pago:"Carta de crédito", etapa:"cierre", ejecutivo:"Francisco M.",
+   tl:[["Oferta aceptada","1 mar"],["PO recibida — 10 contenedores","2 mar"],["Fruta reservada en frigorífico","2 mar"]]},
+  {op:"OP-2027-0025", cliente:"Andes Export Ecuador", pais:"Guayaquil, Ecuador", tipo:"Manzana", variedad:"Granny Smith", calidad:"Categoría II", calibre:"125", cont:4, fob:19800, incoterm:"CFR", pago:"Contado", etapa:"cierre", ejecutivo:"Anita R.",
+   tl:[["PO recibida","28 feb"],["Booking confirmado","3 mar"]]}
+];
+
+let bodegas = [
+  {id:"b1", nombre:"Packing Curicó", comuna:"Curicó, Maule", stock:[
+    {tipo:"Manzana", variedad:"Royal Gala", calidad:"Categoría I", calibre:"100", disp:14, comp:8},
+    {tipo:"Manzana", variedad:"Royal Gala", calidad:"Categoría I", calibre:"113", disp:9,  comp:3},
+    {tipo:"Manzana", variedad:"Fuji", calidad:"Categoría I", calibre:"113", disp:11, comp:5},
+    {tipo:"Manzana", variedad:"Granny Smith", calidad:"Categoría II", calibre:"125", disp:5, comp:4},
+    {tipo:"Uva", variedad:"Crimson", calidad:"Categoría I", calibre:"XL", disp:7, comp:0}
+  ]},
+  {id:"b2", nombre:"Frigorífico San Fernando", comuna:"San Fernando, O'Higgins", stock:[
+    {tipo:"Cereza", variedad:"Regina", calidad:"Premium", calibre:"XL", disp:6, comp:10},
+    {tipo:"Cereza", variedad:"Lapins", calidad:"Premium", calibre:"J", disp:12, comp:2},
+    {tipo:"Cereza", variedad:"Santina", calidad:"Premium", calibre:"XL", disp:8, comp:0},
+    {tipo:"Arándano", variedad:"Duke", calidad:"Categoría I", calibre:"12mm", disp:3, comp:1}
+  ]},
+  {id:"b3", nombre:"Bodega Puerto Valparaíso", comuna:"Valparaíso", stock:[
+    {tipo:"Kiwi", variedad:"Hayward", calidad:"Categoría I", calibre:"30", disp:4, comp:3},
+    {tipo:"Ciruela", variedad:"Angeleno", calidad:"Categoría I", calibre:"50", disp:6, comp:2}
+  ]}
+];
+
+let activeBodega = "b1";
+let invFilter = "Todos";
+let openDeal = null;
+
+// ---------- helpers ----------
+const $ = (s)=>document.querySelector(s);
+const fmt = (n)=>n.toLocaleString("es-CL");
+const usd = (n)=>"USD " + n.toLocaleString("es-CL");
+const el = (tag, cls, html)=>{const e=document.createElement(tag); if(cls) e.className=cls; if(html!=null) e.innerHTML=html; return e;};
+
+let toastTimer;
+function toast(msg){
+  const t=$("#toast"); t.textContent=msg; t.classList.add("show");
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove("show"), 3600);
+}
+
+// ---------- navegación ----------
+const VIEWS = {
+  crm:{t:"Embudo comercial", s:"Arrastra una tarjeta entre etapas o ábrela para ver el detalle del trato."},
+  inv:{t:"Inventario y disponibilidad", s:"Stock por bodega, medido en contenedores. Disponible = libre para comprometer."},
+  rep:{t:"Reportes", s:"Proyección de ventas contra fruta disponible y análisis de razones de pérdida."},
+  ing:{t:"Ingreso en bodega", s:"Registro de recepción para operadores, directo desde la bodega."}
+};
+document.querySelectorAll(".nav button").forEach(b=>{
+  b.addEventListener("click",()=>{
+    document.querySelectorAll(".nav button").forEach(x=>x.setAttribute("aria-current", x===b ? "true":"false"));
+    const v=b.dataset.view;
+    Object.keys(VIEWS).forEach(k=>{ $("#view-"+k).hidden = k!==v; });
+    $("#viewTitle").textContent = VIEWS[v].t;
+    $("#viewSub").textContent = VIEWS[v].s;
+    if(v==="rep") renderReports();
+    if(v==="ing") renderOpBodegas();
+  });
+});
+
+// ---------- CRM ----------
+function renderKpisCrm(){
+  const activos = deals.filter(d=>d.etapa!=="cierre");
+  const contNeg = activos.reduce((s,d)=>s+d.cont,0);
+  const cerrados = deals.filter(d=>d.etapa==="cierre");
+  const valor = deals.reduce((s,d)=>s+d.fob*d.cont,0);
+  const data = [
+    ["Tratos activos", activos.length, "en negociación"],
+    ["Contenedores en negociación", contNeg, "de 400 del programa"],
+    ["Tratos cerrados", cerrados.length, cerrados.reduce((s,d)=>s+d.cont,0)+" contenedores"],
+    ["Valor del pipeline", "USD "+ (valor/1000).toFixed(0) + "K", "estimado FOB"]
+  ];
+  const c=$("#crmKpis"); c.innerHTML="";
+  data.forEach(([label,val,sub])=>{
+    const k=el("div","kpi");
+    k.append(el("em",null,label), el("b",null,typeof val==="number"?fmt(val):val), el("span",null,sub));
+    c.append(k);
+  });
+}
+
+function dealCard(d){
+  const c = el("div","card");
+  c.draggable = true; c.dataset.op = d.op;
+  const top = el("div","card-top");
+  top.append(el("h3",null,d.cliente), el("span","op",d.op));
+  const dest = el("div","dest", "▸ " + d.pais);
+  const prod = el("div","prod", `<b>${d.tipo}</b> · ${d.variedad}`);
+  const chips = el("div","chips");
+  chips.append(el("span","chip q",d.calidad), el("span","chip cal","Calibre "+d.calibre), el("span","chip",d.incoterm));
+  const foot = el("div","card-foot");
+  foot.append(el("span","cont",`${d.cont}<span>cont.</span>`), el("span","fob",usd(d.fob)+"/cont"));
+  c.append(top,dest,prod,chips,foot);
+
+  c.addEventListener("click",()=>openDrawer(d.op));
+  c.addEventListener("dragstart",e=>{e.dataTransfer.setData("text/plain",d.op); c.classList.add("dragging");});
+  c.addEventListener("dragend",()=>c.classList.remove("dragging"));
+  return c;
+}
+
+function renderBoard(){
+  const board=$("#board"); board.innerHTML="";
+  STAGES.forEach(st=>{
+    const list = deals.filter(d=>d.etapa===st.id);
+    const col = el("div","col");
+    const head = el("div","col-head");
+    const rail = el("div","rail"); rail.style.background = st.color;
+    const meta = el("div","col-meta",
+      `<span>${list.length} trato${list.length===1?"":"s"}</span><span>${list.reduce((s,d)=>s+d.cont,0)} cont.</span>`);
+    head.append(rail, el("h2",null,st.name), meta);
+    const body = el("div","col-body"); body.dataset.stage = st.id;
+    list.forEach(d=>body.append(dealCard(d)));
+
+    body.addEventListener("dragover",e=>{e.preventDefault(); body.classList.add("over");});
+    body.addEventListener("dragleave",()=>body.classList.remove("over"));
+    body.addEventListener("drop",e=>{
+      e.preventDefault(); body.classList.remove("over");
+      moveDeal(e.dataTransfer.getData("text/plain"), st.id);
+    });
+
+    col.append(head, body);
+    board.append(col);
+  });
+  renderKpisCrm();
+}
+
+function moveDeal(op, stage){
+  const d = deals.find(x=>x.op===op);
+  if(!d || d.etapa===stage) return;
+  const wasClosed = d.etapa==="cierre";
+  d.etapa = stage;
+  const stName = STAGES.find(s=>s.id===stage).name;
+  d.tl.unshift(["Movido a “"+stName+"”","Ahora"]);
+
+  if(stage==="cierre" && !wasClosed){
+    const where = commitStock(d);
+    toast(where
+      ? `Trato cerrado — ${d.cont} contenedores comprometidos en ${where}`
+      : `Trato cerrado — sin stock suficiente de ${d.variedad} calibre ${d.calibre}`);
+  } else if(wasClosed){
+    releaseStock(d);
+    toast(`Trato reabierto — ${d.cont} contenedores liberados al stock disponible`);
+  } else {
+    toast(`${d.cliente} → ${stName}`);
+  }
+  renderBoard(); renderInv();
+  if(openDeal===op) fillDrawer(d);
+}
+
+function findStock(d){
+  for(const b of bodegas){
+    const row = b.stock.find(s=>s.variedad===d.variedad && s.calibre===d.calibre && s.calidad===d.calidad);
+    if(row) return {b,row};
+  }
+  return null;
+}
+function commitStock(d){
+  const hit = findStock(d); if(!hit) return null;
+  const move = Math.min(hit.row.disp, d.cont);
+  hit.row.disp -= move; hit.row.comp += move;
+  return hit.b.nombre;
+}
+function releaseStock(d){
+  const hit = findStock(d); if(!hit) return;
+  const move = Math.min(hit.row.comp, d.cont);
+  hit.row.comp -= move; hit.row.disp += move;
+}
+
+// ---------- drawer ----------
+function openDrawer(op){
+  const d = deals.find(x=>x.op===op); if(!d) return;
+  openDeal = op; fillDrawer(d);
+  $("#drawer").classList.add("open"); $("#drawer").setAttribute("aria-hidden","false");
+  $("#scrim").classList.add("open");
+}
+function closeDrawer(){
+  openDeal=null;
+  $("#drawer").classList.remove("open"); $("#drawer").setAttribute("aria-hidden","true");
+  $("#scrim").classList.remove("open");
+}
+function fillDrawer(d){
+  $("#dOp").textContent = d.op;
+  $("#dName").textContent = d.cliente;
+  $("#dDest").textContent = d.pais + " · Ejecutivo: " + d.ejecutivo;
+
+  const idx = STAGES.findIndex(s=>s.id===d.etapa);
+  $("#dStages").innerHTML = STAGES.map((s,i)=>
+    `<div style="background:${i<=idx?s.color:"var(--line)"}"></div>`).join("");
+  $("#dStageName").textContent = STAGES[idx].name;
+
+  const cajas = Math.round(d.cont * (CAJAS_POR_CONT[d.tipo]||1200));
+  $("#dProd").innerHTML = `
+    <dt>Tipo</dt><dd>${d.tipo}</dd>
+    <dt>Variedad</dt><dd>${d.variedad}</dd>
+    <dt>Calidad</dt><dd>${d.calidad}</dd>
+    <dt>Calibre</dt><dd>${d.calibre}</dd>
+    <dt>Contenedores</dt><dd>${d.cont}</dd>
+    <dt>Equivalencia</dt><dd>≈ ${fmt(cajas)} cajas</dd>`;
+  $("#dComm").innerHTML = `
+    <dt>Precio FOB</dt><dd>${usd(d.fob)} / cont.</dd>
+    <dt>Valor del trato</dt><dd>${usd(d.fob*d.cont)}</dd>
+    <dt>Incoterm</dt><dd>${d.incoterm}</dd>
+    <dt>Condición de pago</dt><dd>${d.pago}</dd>`;
+  $("#dTl").innerHTML = d.tl.slice(0,5).map(([t,when])=>
+    `<div class="tl"><i></i><div>${t}<span>${when}</span></div></div>`).join("");
+
+  const adv = $("#dAdvance");
+  adv.textContent = d.etapa==="cierre" ? "Trato finalizado" : "Avanzar de etapa";
+  adv.disabled = d.etapa==="cierre";
+  adv.style.opacity = d.etapa==="cierre" ? .5 : 1;
+}
+$("#dClose").addEventListener("click",closeDrawer);
+$("#dCloseBtn").addEventListener("click",closeDrawer);
+$("#scrim").addEventListener("click",closeDrawer);
+$("#dAdvance").addEventListener("click",()=>{
+  const d = deals.find(x=>x.op===openDeal); if(!d) return;
+  const i = STAGES.findIndex(s=>s.id===d.etapa);
+  if(i < STAGES.length-1) moveDeal(d.op, STAGES[i+1].id);
+});
+document.addEventListener("keydown",e=>{if(e.key==="Escape") closeDrawer();});
+
+// ---------- Inventario ----------
+function renderBodegas(){
+  const wrap=$("#bodegas"); wrap.innerHTML="";
+  bodegas.forEach(b=>{
+    const total = b.stock.reduce((s,r)=>s+r.disp+r.comp,0);
+    const btn = el("button","btab");
+    btn.setAttribute("aria-current", b.id===activeBodega ? "true":"false");
+    btn.append(el("b",null,b.nombre), el("small",null,`${b.comuna} · ${total} cont.`));
+    btn.addEventListener("click",()=>{activeBodega=b.id; renderInv();});
+    wrap.append(btn);
+  });
+  const add = el("button","btn dashed","+ Nueva bodega");
+  add.addEventListener("click",()=>{
+    const nombre = prompt("Nombre de la bodega","Frigorífico Rancagua");
+    if(!nombre) return;
+    const comuna = prompt("Comuna / región","Rancagua, O'Higgins") || "Sin ubicación";
+    const id = "b"+(bodegas.length+1);
+    bodegas.push({id, nombre, comuna, stock:[]});
+    activeBodega = id; renderInv();
+    toast(`Bodega “${nombre}” creada — ya puedes ingresar stock`);
+  });
+  wrap.append(add);
+}
+
+function renderInvKpis(b){
+  const disp = b.stock.reduce((s,r)=>s+r.disp,0);
+  const comp = b.stock.reduce((s,r)=>s+r.comp,0);
+  const criticos = b.stock.filter(r=>r.disp===0).length;
+  const data = [
+    ["Disponible", disp, "contenedores libres"],
+    ["Comprometido", comp, "asignado a tratos"],
+    ["Stock total", disp+comp, "en esta bodega"],
+    ["Productos sin disponible", criticos, criticos===1?"referencia":"referencias"]
+  ];
+  const c=$("#invKpis"); c.innerHTML="";
+  data.forEach(([l,v,s])=>{
+    const k=el("div","kpi");
+    k.append(el("em",null,l), el("b",null,fmt(v)), el("span",null,s));
+    c.append(k);
+  });
+}
+
+function renderFilters(b){
+  const tipos = ["Todos", ...new Set(b.stock.map(r=>r.tipo))];
+  if(!tipos.includes(invFilter)) invFilter="Todos";
+  const f=$("#invFilters"); f.innerHTML="";
+  tipos.forEach(t=>{
+    const btn = el("button",null,t);
+    btn.setAttribute("aria-pressed", t===invFilter ? "true":"false");
+    btn.addEventListener("click",()=>{invFilter=t; renderInv();});
+    f.append(btn);
+  });
+}
+
+function renderInv(){
+  renderBodegas();
+  const b = bodegas.find(x=>x.id===activeBodega) || bodegas[0];
+  $("#invPanelTitle").textContent = "Stock · " + b.nombre;
+  renderInvKpis(b); renderFilters(b);
+
+  const body=$("#stockBody"); body.innerHTML="";
+  const rows = b.stock.filter(r=>invFilter==="Todos" || r.tipo===invFilter);
+  if(!rows.length){
+    const tr=el("tr"); const td=el("td",null,"Sin stock registrado en esta bodega. Usa “+ Ingresar stock” para cargar productos.");
+    td.colSpan=7; td.style.color="var(--muted)"; td.style.padding="26px 16px"; tr.append(td); body.append(tr); return;
+  }
+  rows.forEach(r=>{
+    const total = r.disp + r.comp;
+    const pct = total ? Math.round(r.comp/total*100) : 0;
+    const cajas = Math.round(r.disp * (CAJAS_POR_CONT[r.tipo]||1200));
+    const state = r.disp===0 ? ["crit","Sin disponible"] : (r.disp<=3 ? ["warn","Stock bajo"] : ["ok","Disponible"]);
+    const tr=el("tr");
+    tr.innerHTML = `
+      <td><span class="pname">${r.tipo}</span><span class="pvar">${r.variedad}</span></td>
+      <td><span class="chip q">${r.calidad}</span></td>
+      <td class="num">${r.calibre}</td>
+      <td class="num">${r.disp}<span class="cajas">≈ ${fmt(cajas)} cajas</span></td>
+      <td class="num">${r.comp}<div class="meter" style="margin-left:auto"><i style="width:${pct}%"></i></div></td>
+      <td class="num">${total}</td>
+      <td><span class="state ${state[0]}">${state[1]}</span></td>`;
+    body.append(tr);
+  });
+}
+
+$("#toggleStockForm").addEventListener("click",()=>{
+  const f=$("#stockForm"); f.hidden = !f.hidden;
+  if(!f.hidden) $("#f-var").focus();
+});
+$("#stockForm").addEventListener("submit",e=>{
+  e.preventDefault();
+  const b = bodegas.find(x=>x.id===activeBodega);
+  const row = {
+    tipo:$("#f-tipo").value, variedad:$("#f-var").value.trim(),
+    calidad:$("#f-cal").value, calibre:$("#f-cbr").value.trim(),
+    disp:parseInt($("#f-cont").value,10)||0, comp:0
+  };
+  const dup = b.stock.find(s=>s.variedad===row.variedad && s.calibre===row.calibre && s.calidad===row.calidad);
+  if(dup) dup.disp += row.disp; else b.stock.push(row);
+  e.target.reset(); $("#stockForm").hidden = true;
+  renderInv();
+  toast(`${row.disp} contenedores de ${row.variedad} ingresados en ${b.nombre}`);
+});
+
+// ---------- Reportes ----------
+const PROY = [
+  {mes:"Feb", dem:38, ofe:52},
+  {mes:"Mar", dem:64, ofe:78},
+  {mes:"Abr", dem:71, ofe:68},
+  {mes:"May", dem:66, ofe:74},
+  {mes:"Jun", dem:58, ofe:70},
+  {mes:"Jul", dem:50, ofe:58}
+];
+const MERMA = [
+  {razon:"Daño por frío en cámara", cajas:4820},
+  {razon:"Pudrición / hongos", cajas:3640},
+  {razon:"Calibre fuera de norma", cajas:2910},
+  {razon:"Golpe en manipulación", cajas:1750},
+  {razon:"Rechazo en inspección SAG", cajas:980},
+  {razon:"Otras causas", cajas:540}
+];
+
+const tipEl = $("#tip");
+function showTip(e, html){
+  tipEl.innerHTML = html; tipEl.classList.add("show");
+  const pad = 14, w = tipEl.offsetWidth, h = tipEl.offsetHeight;
+  let x = e.clientX + pad, y = e.clientY - h - 10;
+  if(x + w > innerWidth - 8) x = e.clientX - w - pad;
+  if(y < 8) y = e.clientY + pad;
+  tipEl.style.left = x+"px"; tipEl.style.top = y+"px";
+}
+function hideTip(){ tipEl.classList.remove("show"); }
+
+// rect con extremo redondeado (4px) anclado a la línea base
+function barV(x,y,w,h,r){
+  r = Math.min(r, h, w/2);
+  return `M${x},${y+h} L${x},${y+r} Q${x},${y} ${x+r},${y} L${x+w-r},${y} Q${x+w},${y} ${x+w},${y+r} L${x+w},${y+h} Z`;
+}
+function barH(x,y,w,h,r){
+  r = Math.min(r, w, h/2);
+  return `M${x},${y} L${x+w-r},${y} Q${x+w},${y} ${x+w},${y+r} L${x+w},${y+h-r} Q${x+w},${y+h} ${x+w-r},${y+h} L${x},${y+h} Z`;
+}
+
+function renderProyeccion(){
+  const W=580, H=272, mL=34, mR=10, mT=12, mB=42;
+  const pw = W-mL-mR, ph = H-mT-mB;
+  const max = 80, ticks = [0,20,40,60,80];
+  const y = v => mT + ph - (v/max)*ph;
+  const gw = pw/PROY.length, bw = (gw-22)/2;
+
+  let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Demanda comprometida contra fruta proyectada disponible, por mes">`;
+  ticks.forEach(t=>{
+    svg += `<line class="gridline" x1="${mL}" x2="${W-mR}" y1="${y(t)}" y2="${y(t)}"/>`;
+    svg += `<text class="axis-txt" x="${mL-8}" y="${y(t)+4}" text-anchor="end">${t}</text>`;
+  });
+  PROY.forEach((d,i)=>{
+    const gx = mL + i*gw + 11;
+    const hd = (d.dem/max)*ph, ho = (d.ofe/max)*ph;
+    const deficit = d.dem > d.ofe;
+    svg += `<path class="bar" d="${barV(gx, y(d.dem), bw, hd, 4)}" fill="var(--c1)"
+      data-tip="<b>${d.mes} 2027</b>Demanda comprometida: <i>${d.dem} cont.</i>"></path>`;
+    svg += `<path class="bar" d="${barV(gx+bw+2, y(d.ofe), bw, ho, 4)}" fill="var(--c2)"
+      data-tip="<b>${d.mes} 2027</b>Fruta proyectada: <i>${d.ofe} cont.</i><br>Saldo: <i>${d.ofe-d.dem} cont.</i>"></path>`;
+    svg += `<text class="axis-txt ${deficit?"strong":""}" x="${gx+bw+1}" y="${H-mB+18}" text-anchor="middle">${d.mes}</text>`;
+    if(deficit) svg += `<text class="val-txt" x="${gx+bw+1}" y="${H-mB+32}" text-anchor="middle" fill="var(--crit)">−${d.dem-d.ofe}</text>`;
+  });
+  svg += `<line class="gridline" x1="${mL}" x2="${W-mR}" y1="${y(0)}" y2="${y(0)}" stroke="var(--line)"/>`;
+  svg += `<text class="axis-txt" x="${mL}" y="${H-4}">Contenedores por mes · temporada 2027</text></svg>`;
+  $("#chartProy").innerHTML = svg;
+
+  const dem = PROY.reduce((s,d)=>s+d.dem,0), ofe = PROY.reduce((s,d)=>s+d.ofe,0);
+  $("#coberturaVal").textContent = Math.round(dem/ofe*100) + "%";
+  $("#coberturaSub").textContent = `${dem} de ${ofe} contenedores proyectados ya comprometidos`;
+  $("#mDem").textContent = dem + " cont.";
+  $("#mOfe").textContent = ofe + " cont.";
+  $("#mSaldo").textContent = (ofe-dem) + " cont.";
+
+  const al = $("#proyAlerts"); al.innerHTML="";
+  PROY.filter(d=>d.dem>d.ofe).forEach(d=>{
+    al.append(el("div","alert crit",
+      `<b>Abril:</b> la demanda comprometida supera la fruta proyectada en <b>${d.dem-d.ofe} contenedores</b>. Revisar reasignación o compra de caja terminada.`));
+  });
+  al.append(el("div","alert",
+    `<b>Saldo comercial:</b> quedan <b>${ofe-dem} contenedores</b> sin comprometer, concentrados en junio y julio.`));
+}
+
+function renderMerma(){
+  const W=560, rowH=34, mL=168, mR=64, mT=10;
+  const H = mT + MERMA.length*rowH + 26;
+  const pw = W-mL-mR;
+  const max = Math.max(...MERMA.map(m=>m.cajas));
+  const total = MERMA.reduce((s,m)=>s+m.cajas,0);
+
+  let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Cajas perdidas por razón de pérdida, ordenadas de mayor a menor">`;
+  MERMA.forEach((m,i)=>{
+    const yy = mT + i*rowH;
+    const bw = (m.cajas/max)*pw;
+    const pct = (m.cajas/total*100).toFixed(1).replace(".",",");
+    svg += `<text class="axis-txt" x="${mL-10}" y="${yy+17}" text-anchor="end">${m.razon}</text>`;
+    svg += `<path class="bar" d="${barH(mL, yy+4, Math.max(bw,3), 20, 4)}" fill="var(--c1)"
+      data-tip="<b>${m.razon}</b><i>${fmt(m.cajas)} cajas</i> · ${pct}% de la pérdida"></path>`;
+    svg += `<text class="val-txt" x="${mL+bw+8}" y="${yy+18}">${fmt(m.cajas)}</text>`;
+  });
+  svg += `<text class="axis-txt" x="${mL}" y="${H-4}">Cajas perdidas · acumulado temporada</text></svg>`;
+  $("#chartMerma").innerHTML = svg;
+
+  $("#mermaTotal").textContent = fmt(total) + " cajas";
+  $("#mermaSub").textContent = `≈ ${(total/1240).toFixed(1).replace(".",",")} contenedores equivalentes · 3,1% del volumen procesado`;
+  $("#mermaList").innerHTML = MERMA.map(m=>
+    `<div class="mini"><span>${m.razon}</span><b>${(m.cajas/total*100).toFixed(1).replace(".",",")}%</b></div>`).join("");
+}
+
+function renderReports(){
+  renderProyeccion(); renderMerma();
+  document.querySelectorAll("#view-rep .bar").forEach(b=>{
+    b.addEventListener("mousemove",e=>showTip(e, b.dataset.tip));
+    b.addEventListener("mouseleave",hideTip);
+  });
+}
+
+// ---------- Ingreso en bodega (operador) ----------
+let opLog = [
+  {txt:"6 cont. · Cereza Lapins · Premium · calibre J", meta:"Frigorífico San Fernando · 08:42 · LOT-2027-0146"},
+  {txt:"4 cont. · Manzana Royal Gala · Categoría I · calibre 100", meta:"Packing Curicó · 07:15 · LOT-2027-0145"}
+];
+function renderOpBodegas(){
+  const sel = $("#o-bodega"); const prev = sel.value;
+  sel.innerHTML = bodegas.map(b=>`<option value="${b.id}">${b.nombre}</option>`).join("");
+  sel.value = bodegas.some(b=>b.id===prev) ? prev : activeBodega;
+  renderOpLog();
+}
+function renderOpLog(){
+  const box = $("#opLog");
+  if(!opLog.length){ box.innerHTML = `<p class="oplog-empty">Aún no hay ingresos registrados hoy.</p>`; return; }
+  box.innerHTML = opLog.map(o=>
+    `<div class="oplog-item"><i></i><div><b>${o.txt}</b><span>${o.meta}</span></div></div>`).join("");
+}
+$("#o-minus").addEventListener("click",()=>{
+  const i=$("#o-cont"); i.value = Math.max(1, (parseInt(i.value,10)||1) - 1);
+});
+$("#o-plus").addEventListener("click",()=>{
+  const i=$("#o-cont"); i.value = (parseInt(i.value,10)||0) + 1;
+});
+$("#opForm").addEventListener("submit",e=>{
+  e.preventDefault();
+  const b = bodegas.find(x=>x.id===$("#o-bodega").value);
+  const row = {
+    tipo:$("#o-tipo").value, variedad:$("#o-var").value.trim(),
+    calidad:$("#o-cal").value, calibre:$("#o-cbr").value.trim(),
+    disp:parseInt($("#o-cont").value,10)||0, comp:0
+  };
+  const dup = b.stock.find(s=>s.variedad===row.variedad && s.calibre===row.calibre && s.calidad===row.calidad);
+  if(dup) dup.disp += row.disp; else b.stock.push(row);
+
+  const lote = $("#o-lote").value.trim();
+  const hora = new Date().toLocaleTimeString("es-CL",{hour:"2-digit",minute:"2-digit"});
+  opLog.unshift({
+    txt:`${row.disp} cont. · ${row.tipo} ${row.variedad} · ${row.calidad} · calibre ${row.calibre}`,
+    meta:`${b.nombre} · ${hora}${lote ? " · "+lote : ""}`
+  });
+  e.target.reset(); $("#o-cont").value = 1;
+  renderOpBodegas(); renderInv();
+  toast(`Ingreso registrado — ${row.disp} cont. de ${row.variedad} en ${b.nombre}`);
+});
+
+renderBoard();
+renderInv();
+renderOpBodegas();
+renderReports();
+</script>
