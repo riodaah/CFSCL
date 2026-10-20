@@ -18,6 +18,9 @@ export const PARAMS = {
   diasPagoSetDocs: { valor: 3, unidad: "días", label: "Plazo pago contra set de documentos", nota: "Depende del cliente" },
   plazoRetornoBins: { valor: 120, unidad: "días", label: "Plazo retorno de bins", nota: "3 a 4 meses" },
   precioIndustrialKg: { valor: 90, unidad: "CLP/kg", label: "Precio venta industrial", nota: "Referencial, jugo y pulpa" },
+  cajasPorContenedor: { valor: 1029, unidad: "cajas", label: "Cajas por contenedor", nota: "21 pallets" },
+  diasSeguimiento: { valor: 7, unidad: "días", label: "Aviso de seguimiento a clientes", nota: "Sin contacto con un cliente activo" },
+  comisionFerrada: { valor: 0.05, unidad: "USD/caja", label: "Comisión Ferrada", nota: "Por caja intermediada", porConfirmar: true },
 } as const;
 
 export const P = Object.fromEntries(Object.entries(PARAMS).map(([k, v]) => [k, v.valor])) as {

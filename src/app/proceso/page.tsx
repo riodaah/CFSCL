@@ -39,7 +39,7 @@ export default function Proceso() {
   return (
     <>
       <PageHeader
-        etapa="Etapa 2"
+        etapa="Módulo 2"
         titulo="Proceso"
         subtitulo="El packing clasifica en exportable e industrial y embala por calidad y calibre. El reporte de proceso llega por correo y se separa por código de productor."
       />
@@ -161,7 +161,7 @@ export default function Proceso() {
                 return (
                   <tr key={l.id} className="border-b border-ink-100 last:border-0">
                     <td className="td">{fecha(l.fecha)}</td>
-                    <td className="td">{p.nombre}<span className="ml-1.5 font-mono text-[11.5px] text-ink-400">{p.codigoPacking}</span></td>
+                    <td className="td">{p.nombre}<span className="ml-1.5 font-mono text-[11.5px] text-ink-400">SAG {p.codigoSag}</span></td>
                     <td className="td">{l.variedad}</td>
                     <td className="td text-right">{n(l.binsProcesados)}</td>
                     <td className="td text-right">{pct(l.kgIndustrial / l.kgEntrada)}</td>

@@ -1,5 +1,5 @@
 // Modelo de dominio CFSCL. Refleja las tablas que tendrá Cloud SQL (PostgreSQL).
-// Montos en CLP como enteros; kilos con decimales.
+// Montos en CLP como enteros; kilos con decimales; precios de venta en USD.
 
 export type Calidad = "Premium" | "Extra Fancy" | "Fancy" | "Choice" | "Comercial";
 export const CALIDADES: Calidad[] = ["Premium", "Extra Fancy", "Fancy", "Choice", "Comercial"];
@@ -7,6 +7,8 @@ export const CALIBRES = [88, 100, 113, 125, 138, 150] as const;
 export type Calibre = (typeof CALIBRES)[number];
 
 export type Fuente = "correo" | "manual" | "agente";
+
+// ───────── Módulo 1 · Productores (origen de la fruta) ─────────
 
 export interface Productor {
   id: string;
@@ -17,10 +19,12 @@ export interface Productor {
   contacto: string;
   telefono: string;
   email: string;
-  codigoPacking: string;
+  codigoSag: string; // así identifica el packing al productor en sus reportes
   variedades: string[];
   tamano: "Grande" | "Mediano" | "Pequeño";
 }
+
+export type EstadoTemporada = "Contrato firmado" | "En cosecha" | "Cosecha terminada" | "Cosecha cerrada" | "Liquidada";
 
 export interface Temporada {
   id: string;
@@ -33,7 +37,50 @@ export interface Temporada {
   binsEnviados: number; // bins vacíos que el packing despachó al productor
   binsDevueltosVacios: number;
   condicionesEspeciales?: string;
-  estado: "Contrato firmado" | "En cosecha" | "Cosecha terminada" | "Liquidada";
+  estado: EstadoTemporada;
+  /** Cierre anticipado: no llegarán más bins (ej. granizo) */
+  cierre?: { fecha: string; motivo: string };
+}
+
+/** Productores en conversación para la próxima temporada */
+export interface ProductorPendiente {
+  id: string;
+  nombre: string;
+  comuna: string;
+  region: string;
+  contacto: string;
+  telefono: string;
+  variedades: string[];
+  binsEstimados: number;
+  estado: "Por visitar" | "Por firmar";
+  fecha: string; // visita agendada o realizada
+  nota: string;
+}
+
+/** Exportadoras que venden caja terminada (no pasan por el packing propio) */
+export interface Exportador {
+  id: string;
+  nombre: string;
+  rut: string;
+  ciudad: string;
+  pais: "Chile" | "Perú";
+  contacto: string;
+  cargo: string;
+  telefono: string;
+  email: string;
+  productos: string[];
+  nota?: string;
+}
+
+export interface CompraCajaTerminada {
+  id: string;
+  exportadorId: string;
+  fecha: string;
+  contenedores: number;
+  cajas: number;
+  detalle: string; // variedad, calidades y calibres
+  costoUsdCaja: number;
+  ocId?: string;
 }
 
 export interface HistorialTemporada {
@@ -90,7 +137,7 @@ export interface PagoProductor {
   id: string;
   productorId: string;
   tipo: TipoPagoProductor;
-  base: string; // "1.152 bins × $31.500"
+  base: string;
   montoClp: number;
   vencimiento: string;
   estado: "Pagado" | "Por pagar" | "Programado";
@@ -99,30 +146,57 @@ export interface PagoProductor {
 export interface DocumentoProductor {
   tipo: string;
   requerido: boolean;
-  recibido?: string; // fecha
+  recibido?: string;
   fuente?: Fuente;
 }
+
+// ───────── Módulo 3 · Clientes ─────────
 
 export interface Cliente {
   id: string;
   nombre: string;
+  tipo: "Directo" | "Intermediación";
   contacto: string;
-  pais: string;
-  puertoDestino: string;
-  condicionesPago: string;
+  telefono: string;
   email: string;
+  pais: string;
+  destinos: string[]; // un cliente puede reenviar a varios países
+  condicionesPago: string;
+  calificacion: number; // 1 a 5
+  clienteDesde: number;
+  ultimoContacto: string;
 }
 
-export const ETAPAS_OC = [
+/** Pasos de una orden de compra. Se agrupan en 3 columnas en el tablero. */
+export const PASOS_OC = [
   "Orden de compra",
+  "Disponibilidad",
   "Reserva naviera",
-  "Transporte a puerto",
   "Embarcado",
-  "Documentos enviados",
+  "Draft enviado",
+  "Pago recibido",
+  "Set oficial enviado",
   "En destino",
   "Cerrada",
 ] as const;
-export type EtapaOC = (typeof ETAPAS_OC)[number];
+export type PasoOC = (typeof PASOS_OC)[number];
+
+export const COLUMNAS_OC = [
+  { id: "oc", titulo: "Orden de compra", descripcion: "Recibida y verificando fruta", pasos: ["Orden de compra", "Disponibilidad"] },
+  { id: "embarque", titulo: "Embarque", descripcion: "Naviera, carga y draft", pasos: ["Reserva naviera", "Embarcado", "Draft enviado"] },
+  { id: "cobro", titulo: "Pago y entrega", descripcion: "Pago, set oficial y llegada", pasos: ["Pago recibido", "Set oficial enviado", "En destino"] },
+] as const;
+
+export type HitoPago = "Anticipo" | "Contra documentos" | "A la llegada" | "Al contado";
+
+export interface PagoCliente {
+  hito: HitoPago;
+  pct: number;
+  montoUsd: number;
+  vencimiento?: string;
+  pagado?: string;
+  estado: "Pagado" | "Pendiente" | "Vencido" | "Sin fecha";
+}
 
 export interface LineaOC {
   calidad: Calidad;
@@ -130,47 +204,59 @@ export interface LineaOC {
   variedad: string;
   cajas: number;
   precioUsdCaja: number;
-}
-
-export interface PagoCliente {
-  hito: string;
-  pct: number;
-  montoUsd: number;
-  vencimiento?: string;
-  estado: "Pagado" | "Pendiente" | "Vencido" | "Sin fecha";
+  /** De dónde sale la fruta: packing propio o caja terminada de una exportadora */
+  origen: "Packing" | { exportadorId: string; compraId: string };
 }
 
 export interface OrdenCompra {
   id: string;
   clienteId: string;
   fecha: string;
-  etapa: EtapaOC;
+  paso: PasoOC;
   contenedores: number;
+  destinoPuerto: string;
+  destinoPais: string;
   lineas: LineaOC[];
   naviera?: string;
   booking?: string;
-  nave?: string;
+  barco?: string;
   etd?: string;
   eta?: string;
-  costoTransporteClp?: number;
+  transitoDias?: number;
+  negociacion: { fecha: string; detalle: string }[];
+  draftEnviado?: string;
+  setOficialEnviado?: string;
   documentos: { tipo: string; recibido?: string }[];
-  fechaEnvioSetDocs?: string;
   pagos: PagoCliente[];
   recepcionCliente?: string;
 }
 
-export type EstadoIngesta = "Confirmado" | "Revisión" | "Propuesta" | "Error";
+// ───────── Ferrada · intermediación ─────────
 
-export interface CorreoIngesta {
+export interface OperacionFerrada {
   id: string;
-  recibido: string;
-  de: string;
-  asunto: string;
-  tipo: "Romana" | "Reporte de proceso" | "Factura de flete" | "Documento productor" | "Documentos exportación" | "Otro";
-  estado: EstadoIngesta;
-  extraido: { campo: string; valor: string }[];
-  validaciones: { ok: boolean; texto: string }[];
-  accion: string;
+  fecha: string;
+  producto: string;
+  origenPais: "Chile" | "Perú";
+  exportadorId: string;
+  destino: string;
+  contenedores: number;
+  cajas: number;
+  compraUsdCaja: number;
+  ventaUsdCaja: number;
+  comisionUsdCaja: number;
+  estado: "Buscando fruta" | "Fruta comprada" | "Embarcada" | "Draft enviado" | "Pagada" | "Cerrada";
+  setOficialEnviado?: string;
+}
+
+// ───────── Transversal ─────────
+
+export interface NotaGestion {
+  id: string;
+  fecha: string; // YYYY-MM-DDTHH:mm
+  autor: string;
+  texto: string;
+  tipo: "Nota" | "Llamada" | "Correo" | "Agente";
 }
 
 export type Severidad = "Crítica" | "Alta" | "Media" | "Info";
@@ -179,7 +265,7 @@ export interface Alerta {
   id: string;
   fecha: string;
   severidad: Severidad;
-  modulo: "Productores" | "Proceso" | "Exportado" | "Pagos";
+  modulo: "Productores" | "Proceso" | "Clientes" | "Ferrada";
   titulo: string;
   detalle: string;
   href: string;

@@ -1,5 +1,5 @@
 import { Badge, PageHeader, Section, TableWrap } from "@/components/ui";
-import { TIPOS_DOC_PRODUCTOR, productores } from "@/lib/data";
+import { DOCS_SET_OFICIAL, TIPOS_DOC_PRODUCTOR, productores } from "@/lib/data";
 import { n } from "@/lib/format";
 import { PARAMS } from "@/lib/params";
 import { CALIBRES } from "@/lib/types";
@@ -14,10 +14,10 @@ const CALIDADES_CFG = [
 
 const USUARIOS = [
   { nombre: "Francisco Padilla", rol: "Gerencia", permisos: "Todo el sistema, aprueba pagos" },
-  { nombre: "Anita", rol: "Operaciones y logística", permisos: "Carga de datos, documentos y bandeja de correos" },
+  { nombre: "Anita", rol: "Operaciones y logística", permisos: "Carga de datos y documentos, aprueba lo que propone el agente de correos" },
 ];
 
-const DOCS_EXPO = ["Orden de compra", "Factura comercial", "Packing list", "Certificado fitosanitario", "BL", "Certificado de origen"];
+const DOCS_EXPO = DOCS_SET_OFICIAL;
 
 export default function Configuracion() {
   const variedades = [...new Set(productores.flatMap((p) => p.variedades))].sort();
@@ -75,6 +75,8 @@ export default function Configuracion() {
         <Section titulo="Catálogos">
           <div className="space-y-4">
             <div>
+              <div className="label mb-1.5">Especies</div>
+              <div className="mb-3 flex flex-wrap gap-1.5"><Badge tono="verde">Manzana</Badge><Badge tono="verde">Arándano</Badge></div>
               <div className="label mb-1.5">Variedades</div>
               <div className="flex flex-wrap gap-1.5">{variedades.map((v) => <Badge key={v} tono="verde">{v}</Badge>)}</div>
             </div>
@@ -87,7 +89,7 @@ export default function Configuracion() {
               <div className="flex flex-wrap gap-1.5">{TIPOS_DOC_PRODUCTOR.map((d) => <Badge key={d}>{d}</Badge>)}</div>
             </div>
             <div>
-              <div className="label mb-1.5">Set de documentos de exportación</div>
+              <div className="label mb-1.5">Set de documentos de exportación (draft primero, oficial después del pago)</div>
               <div className="flex flex-wrap gap-1.5">{DOCS_EXPO.map((d) => <Badge key={d}>{d}</Badge>)}</div>
             </div>
           </div>
@@ -104,9 +106,10 @@ export default function Configuracion() {
           </ul>
         </Section>
 
-        <Section titulo="Integraciones" descripcion="Fase 2">
+        <Section titulo="Acceso e integraciones">
           <ul className="space-y-3 text-[13.5px]">
-            <li className="flex items-start justify-between gap-3"><div><div className="font-medium">Buzón de ingesta</div><div className="text-[12.5px] text-ink-500">Correo dedicado donde llegan romana, reportes y facturas</div></div><Badge tono="gris">Por configurar</Badge></li>
+            <li className="flex items-start justify-between gap-3"><div><div className="font-medium">Ingreso con Google Workspace</div><div className="text-[12.5px] text-ink-500">Francisco y Anita entran con sus cuentas de la empresa. Funciona en computador, iPad y celular.</div></div><Badge tono="verde">Fase 1</Badge></li>
+            <li className="flex items-start justify-between gap-3"><div><div className="font-medium">Agente de correos</div><div className="text-[12.5px] text-ink-500">Separado del sistema: lee romana, reportes del packing, naviera y facturas, y carga los datos por la API. Deja su nota en el registro de gestión.</div></div><Badge tono="gris">Fase 2</Badge></li>
             <li className="flex items-start justify-between gap-3"><div><div className="font-medium">API para agentes</div><div className="text-[12.5px] text-ink-500">Registrar recepciones, procesos, fletes y documentos</div></div><Badge tono="gris">Fase 2</Badge></li>
             <li className="flex items-start justify-between gap-3"><div><div className="font-medium">Servidor MCP</div><div className="text-[12.5px] text-ink-500">Consultar el sistema desde un asistente de IA</div></div><Badge tono="gris">Fase 2</Badge></li>
             <li className="flex items-start justify-between gap-3"><div><div className="font-medium">Notificaciones</div><div className="text-[12.5px] text-ink-500">Alertas por correo o WhatsApp</div></div><Badge tono="gris">Por definir</Badge></li>

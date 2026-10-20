@@ -12,7 +12,7 @@ export default function Alertas() {
         subtitulo="El sistema revisa cuadraturas, documentos, plazos y pagos. Cada alerta lleva directo al registro que la generó."
       />
       <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat label="Críticas" valor={c("Crítica")} detalle="Pagos de clientes vencidos" tono="alerta" />
+        <Stat label="Críticas" valor={c("Crítica")} detalle="Pagos vencidos y sets oficiales bloqueados" tono="alerta" />
         <Stat label="Altas" valor={c("Alta")} detalle="Descuadres recientes y documentos" />
         <Stat label="Medias" valor={c("Media")} />
         <Stat label="Informativas" valor={c("Info")} />

@@ -4,7 +4,9 @@
 import { addDays, diffDays } from "./dates";
 import {
   clientes,
+  distribucionCalibre,
   documentosProductor,
+  exportadores,
   fletes,
   lotes,
   ordenes,
@@ -14,7 +16,7 @@ import {
   temporadas,
 } from "./data";
 import { HOY, P } from "./params";
-import { CALIDADES, type Alerta, type Calidad, type OrdenCompra } from "./types";
+import { CALIBRES, CALIDADES, COLUMNAS_OC, type Alerta, type Calidad, type OrdenCompra, type PasoOC } from "./types";
 import { n } from "./format";
 
 export const cajasDeLote = (l: { cajasPorCalidad: Record<Calidad, number> }) =>
@@ -107,11 +109,74 @@ export function totalOC(o: OrdenCompra) {
 }
 export const cajasOC = (o: OrdenCompra) => o.lineas.reduce((a, l) => a + l.cajas, 0);
 export const clienteDe = (o: OrdenCompra) => clientes.find((c) => c.id === o.clienteId)!;
+export const exportadorDe = (id: string) => exportadores.find((e) => e.id === id)!;
+
+export function columnaDe(paso: PasoOC) {
+  return COLUMNAS_OC.find((c) => (c.pasos as readonly string[]).includes(paso))?.id ?? "cerrada";
+}
+
+/** El set oficial no se envía mientras no esté pagado el hito contra documentos. */
+export function pagoContraDocumentos(o: OrdenCompra) {
+  return o.pagos.find((p) => p.hito === "Contra documentos");
+}
+export function setOficialBloqueado(o: OrdenCompra) {
+  if (o.setOficialEnviado) return false;
+  const p = pagoContraDocumentos(o);
+  return !!p && p.estado !== "Pagado";
+}
 
 export function semaforoOC(o: OrdenCompra): "verde" | "amarillo" | "rojo" {
   if (o.pagos.some((p) => p.estado === "Vencido")) return "rojo";
   if (o.pagos.some((p) => p.estado === "Pendiente" && p.vencimiento && diffDays(p.vencimiento, HOY) <= 3)) return "amarillo";
   return "verde";
+}
+
+/** Cajas embaladas en los últimos 14 días por calidad y calibre: lo que se puede ofrecer. */
+export function stockDisponible() {
+  const desde = addDays(HOY, -14);
+  const m = {} as Record<Calidad, Record<number, number>>;
+  CALIDADES.forEach((c) => {
+    const cajas = lotes.filter((l) => l.fecha >= desde).reduce((a, l) => a + l.cajasPorCalidad[c], 0);
+    m[c] = Object.fromEntries(CALIBRES.map((cal) => [cal, Math.round(cajas * distribucionCalibre[cal])]));
+  });
+  // Lo ya comprometido en órdenes con naviera reservada sale del packing propio
+  ordenes
+    .filter((o) => o.paso === "Reserva naviera")
+    .flatMap((o) => o.lineas)
+    .filter((l) => l.origen === "Packing")
+    .forEach((l) => (m[l.calidad][l.calibre] = Math.max(0, (m[l.calidad][l.calibre] ?? 0) - l.cajas)));
+  return m;
+}
+
+export type EstadoLinea = { pedido: number; asignado: number; disponibleAntes: number; estado: "Cubierto" | "Parcial" | "Sin fruta" };
+
+/** Revisa las OC en la primera columna en orden de llegada contra el stock de los últimos 14 días. */
+export function disponibilidad(): Record<string, EstadoLinea[]> {
+  const stock = stockDisponible();
+  const out: Record<string, EstadoLinea[]> = {};
+  [...ordenes]
+    .filter((o) => columnaDe(o.paso) === "oc")
+    .sort((a, b) => a.fecha.localeCompare(b.fecha))
+    .forEach((o) => {
+      out[o.id] = o.lineas.map((l) => {
+        const disp = stock[l.calidad][l.calibre] ?? 0;
+        const asignado = Math.min(disp, l.cajas);
+        stock[l.calidad][l.calibre] = disp - asignado;
+        return { pedido: l.cajas, asignado, disponibleAntes: disp, estado: asignado >= l.cajas ? "Cubierto" : asignado > 0 ? "Parcial" : "Sin fruta" };
+      });
+    });
+  return out;
+}
+
+export function seguimientos() {
+  return clientes
+    .map((c) => {
+      const activas = ordenes.filter((o) => o.clienteId === c.id && o.paso !== "Cerrada");
+      const dias = diffDays(HOY, c.ultimoContacto);
+      return { cliente: c, activas, dias };
+    })
+    .filter((x) => x.activas.length > 0 && x.dias >= P.diasSeguimiento && x.cliente.tipo === "Directo")
+    .sort((a, b) => b.dias - a.dias);
 }
 
 export function pagosProductorPorEstado() {
@@ -166,6 +231,18 @@ export function alertas(): Alerta[] {
           href: `/productores/${p.id}?tab=documentos`,
         }),
       );
+    const r = resumenProductor(p.id);
+    if (r.temporada.cierre && r.saldoBins > 0) {
+      out.push({
+        id: `AL-BINS-${p.id}`,
+        fecha: r.temporada.cierre.fecha,
+        severidad: "Media",
+        modulo: "Productores",
+        titulo: `${n(r.saldoBins)} bins prestados sin devolver · ${p.nombre}`,
+        detalle: `La cosecha terminó el ${r.temporada.cierre.fecha.slice(8, 10)}/${r.temporada.cierre.fecha.slice(5, 7)}. Coordinar el retiro de los bins vacíos.`,
+        href: `/productores/${p.id}`,
+      });
+    }
   });
   fletes
     .filter((f) => f.estado === "Pendiente de factura" && diffDays(HOY, f.fecha) > 3)
@@ -192,30 +269,68 @@ export function alertas(): Alerta[] {
           id: `AL-PC-${o.id}-${p.hito}`,
           fecha: p.vencimiento!,
           severidad: "Crítica",
-          modulo: "Exportado",
+          modulo: "Clientes",
           titulo: `${c.contacto} va ${dias} ${dias === 1 ? "día" : "días"} atrasado · ${o.id}`,
           detalle: `Pago "${p.hito}" (${p.pct}%) por US$ ${n(p.montoUsd)} venció el ${p.vencimiento!.slice(8, 10)}/${p.vencimiento!.slice(5, 7)}.`,
-          href: `/exportado/${o.id}`,
+          href: `/clientes/oc/${o.id}`,
         });
       });
+    if (o.paso === "Draft enviado" && setOficialBloqueado(o)) {
+      out.push({
+        id: `AL-SET-${o.id}`,
+        fecha: o.draftEnviado ?? HOY,
+        severidad: "Crítica",
+        modulo: "Clientes",
+        titulo: `No enviar el set oficial · ${o.id}`,
+        detalle: `${c.nombre} tiene el draft, pero no ha pagado el hito contra documentos. Con el set oficial puede retirar el contenedor.`,
+        href: `/clientes/oc/${o.id}`,
+      });
+    }
   });
+  const disp = disponibilidad();
+  Object.entries(disp).forEach(([id, lineas]) => {
+    const falta = lineas.reduce((a, l) => a + (l.pedido - l.asignado), 0);
+    if (falta > 0) {
+      const o = ordenes.find((x) => x.id === id)!;
+      out.push({
+        id: `AL-DISP-${id}`,
+        fecha: o.fecha,
+        severidad: "Alta",
+        modulo: "Clientes",
+        titulo: `Faltan ${n(falta)} cajas para ${id} · ${clienteDe(o).nombre}`,
+        detalle: `Lo embalado en los últimos 14 días no alcanza. Opciones: esperar proceso o comprar caja terminada a una exportadora.`,
+        href: `/clientes/oc/${id}`,
+      });
+    }
+  });
+  seguimientos().forEach((s) =>
+    out.push({
+      id: `AL-SEG-${s.cliente.id}`,
+      fecha: s.cliente.ultimoContacto,
+      severidad: "Media",
+      modulo: "Clientes",
+      titulo: `Seguimiento: ${s.dias} días sin contacto con ${s.cliente.contacto}`,
+      detalle: `${s.cliente.nombre} tiene ${s.activas.length} ${s.activas.length > 1 ? "órdenes activas" : "orden activa"}. Último contacto el ${s.cliente.ultimoContacto.slice(8, 10)}/${s.cliente.ultimoContacto.slice(5, 7)}.`,
+      href: `/clientes/${s.cliente.id}`,
+    }),
+  );
   out.push({
     id: "AL-RET-1",
     fecha: "2027-03-01",
     severidad: "Media",
     modulo: "Proceso",
     titulo: "Producto terminado lleva 11 de 15 días en packing",
-    detalle: "2 contenedores de Fuji Premium/Extra Fancy listos desde el 1 de marzo. Asignar a OC antes del 16 de marzo para evitar cobro de almacenaje.",
+    detalle: "2 contenedores de Fuji Premium/Extra Fancy listos desde el 1 de marzo. Asignar a una orden de compra antes del 16 de marzo para evitar cobro de almacenaje.",
     href: "/proceso",
   });
   out.push({
     id: "AL-LIQ-1",
     fecha: HOY,
     severidad: "Info",
-    modulo: "Pagos",
+    modulo: "Productores",
     titulo: "Primeras liquidaciones (pago 4) vencen en los próximos 10 días",
     detalle: "Corresponden a los lotes embalados a mediados de enero. Revisar flujo de caja.",
-    href: "/pagos",
+    href: "/productores/pagos",
   });
   const orden = { Crítica: 0, Alta: 1, Media: 2, Info: 3 };
   return out.sort((a, b) => orden[a.severidad] - orden[b.severidad] || b.fecha.localeCompare(a.fecha));

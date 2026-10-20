@@ -10,7 +10,7 @@ import {
   Boxes,
   CalendarDays,
   Factory,
-  Inbox,
+  Handshake,
   LayoutDashboard,
   Menu,
   Settings,
@@ -25,24 +25,38 @@ import { fechaLarga } from "@/lib/format";
 const NAV = [
   { grupo: "General", items: [{ href: "/", label: "Inicio", icon: LayoutDashboard }] },
   {
-    grupo: "Etapas",
+    grupo: "1 · Productores",
     items: [
-      { href: "/productores", label: "Productores", icon: Sprout, etapa: "1" },
-      { href: "/proceso", label: "Proceso", icon: Factory, etapa: "2" },
-      { href: "/exportado", label: "Exportado", icon: Ship, etapa: "3" },
+      { href: "/productores", label: "Productores y exportadoras", icon: Sprout },
+      { href: "/productores/pagos", label: "Pagos a productores", icon: CalendarDays },
+    ],
+  },
+  { grupo: "2 · Proceso", items: [{ href: "/proceso", label: "Proceso y embalaje", icon: Factory }] },
+  {
+    grupo: "3 · Clientes",
+    items: [
+      { href: "/clientes", label: "Órdenes de compra", icon: Ship },
+      { href: "/clientes/lista", label: "Clientes", icon: Users },
+      { href: "/ferrada", label: "Ferrada", icon: Handshake },
     ],
   },
   {
     grupo: "Control",
     items: [
-      { href: "/pagos", label: "Pagos", icon: CalendarDays },
       { href: "/alertas", label: "Alertas", icon: Bell },
-      { href: "/clientes", label: "Clientes", icon: Users },
-      { href: "/ingesta", label: "Bandeja de correos", icon: Inbox, fase2: true },
+      { href: "/configuracion", label: "Configuración", icon: Settings },
     ],
   },
-  { grupo: "Sistema", items: [{ href: "/configuracion", label: "Configuración", icon: Settings }] },
 ];
+
+const HREFS = NAV.flatMap((g) => g.items.map((i) => i.href));
+function activo(path: string, href: string) {
+  if (href === "/") return path === "/";
+  const coincide = (h: string) => path === h || path.startsWith(h + "/");
+  if (!coincide(href)) return false;
+  // gana la ruta más específica (ej. /productores/pagos sobre /productores)
+  return !HREFS.some((h) => h !== href && h.length > href.length && coincide(h));
+}
 
 function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   const path = usePathname();
@@ -53,7 +67,7 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
           <div className="px-3 pb-1.5 font-mono text-[10.5px] uppercase tracking-[0.1em] text-leaf-100/50">{g.grupo}</div>
           <ul className="flex flex-col gap-0.5">
             {g.items.map((it) => {
-              const active = it.href === "/" ? path === "/" : path.startsWith(it.href);
+              const active = activo(path, it.href);
               const Icon = it.icon;
               return (
                 <li key={it.href}>
@@ -68,16 +82,6 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
                   >
                     <Icon size={17} strokeWidth={1.8} aria-hidden />
                     <span className="flex-1">{it.label}</span>
-                    {"etapa" in it && it.etapa && (
-                      <span className="rounded bg-white/10 px-1.5 font-mono text-[10.5px] text-leaf-100/70" style={{ backgroundColor: "rgba(255,255,255,.1)" }}>
-                        {it.etapa}
-                      </span>
-                    )}
-                    {"fase2" in it && it.fase2 && (
-                      <span className="rounded px-1.5 font-mono text-[10px] text-amber-200" style={{ backgroundColor: "rgba(251,191,36,.15)" }}>
-                        Fase 2
-                      </span>
-                    )}
                   </Link>
                 </li>
               );

@@ -9,7 +9,7 @@ import type { Alerta, Severidad } from "@/lib/types";
 import { fecha } from "@/lib/format";
 
 const SEVS: (Severidad | "Todas")[] = ["Todas", "Crítica", "Alta", "Media", "Info"];
-const MODS = ["Todos", "Productores", "Proceso", "Exportado", "Pagos"] as const;
+const MODS = ["Todos", "Productores", "Proceso", "Clientes", "Ferrada"] as const;
 
 export function AlertasLista({ alertas }: { alertas: Alerta[] }) {
   const [sev, setSev] = useState<(typeof SEVS)[number]>("Todas");

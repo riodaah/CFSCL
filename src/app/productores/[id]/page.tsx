@@ -4,7 +4,9 @@ import clsx from "clsx";
 import { ArrowLeft, CheckCircle2, CircleDashed, FileText, Mail, Phone, Upload } from "lucide-react";
 import { Badge, COLOR_CALIDAD, FuenteTag, PageHeader, Progress, Section, StackBar, Stat, TableWrap, type Tono } from "@/components/ui";
 import { cajasDeLote, resumenProductor } from "@/lib/calc";
-import { historial, productores } from "@/lib/data";
+import { bitacora, historial, productores } from "@/lib/data";
+import { Bitacora } from "@/components/bitacora";
+import { CierreCosecha } from "@/components/cierre-cosecha";
 import { clp, clpM, fecha, fechaLarga, n, n1, pct } from "@/lib/format";
 import { P, PARAMS } from "@/lib/params";
 import { CALIDADES, type TipoPagoProductor } from "@/lib/types";
@@ -42,13 +44,13 @@ export default async function ProductorDetalle({
         <ArrowLeft size={14} /> Productores
       </Link>
       <PageHeader
-        etapa={`${p.codigoPacking} · Temporada ${t.nombre}`}
+        etapa={`Código SAG ${p.codigoSag} · Temporada ${t.nombre}`}
         titulo={p.nombre}
         subtitulo={`${p.comuna}, ${p.region} · RUT ${p.rut} · ${p.variedades.join(", ")}`}
         acciones={
           <>
             <button className="btn-ghost" type="button"><Upload size={15} /> Subir documento</button>
-            <Badge tono={t.estado === "Cosecha terminada" ? "verde" : "azul"} className="self-center">{t.estado}</Badge>
+            <Badge tono={t.cierre ? (r.avance < 0.9 ? "ambar" : "verde") : "azul"} className="self-center">{t.estado}</Badge>
           </>
         }
       />
@@ -60,6 +62,8 @@ export default async function ProductorDetalle({
         <Stat label="Exportable" valor={r.kgEntradaProc ? pct(r.pctExportable) : "—"} detalle={`${n(r.cajas)} cajas embaladas`} tono="ok" />
         <Stat label="Costo real por kilo" valor={r.kgRecibidos ? clp(Math.round(r.costoKgCosecha + r.fletePorKg)) : "—"} detalle={`Cosecha ${n1(r.costoKgCosecha)} + flete ${n1(r.fletePorKg)}`} />
       </div>
+
+      <CierreCosecha cierre={t.cierre} contratados={t.binsContratados} recibidos={r.binsRecibidos} />
 
       <div className="mt-5 overflow-x-auto border-b border-ink-200">
         <nav className="flex min-w-max gap-1">
@@ -81,7 +85,8 @@ export default async function ProductorDetalle({
         </nav>
       </div>
 
-      <div className="mt-5">
+      <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="min-w-0">
         {tab === "resumen" && <Resumen r={r} pid={p.id} contacto={p} />}
         {tab === "recepciones" && <Recepciones r={r} />}
         {tab === "fletes" && <Fletes r={r} />}
@@ -89,6 +94,8 @@ export default async function ProductorDetalle({
         {tab === "pagos" && <Pagos r={r} />}
         {tab === "rendimiento" && <Rendimiento r={r} />}
         {tab === "historial" && <Historial pid={p.id} r={r} />}
+        </div>
+        <Bitacora inicial={bitacora[`prod:${p.id}`] ?? []} idBase={`bit-${p.id}`} />
       </div>
     </>
   );
@@ -109,7 +116,7 @@ function Resumen({ r, contacto }: { r: R; pid: string; contacto: (typeof product
     { k: "Bins prestados aún en campo", v: r.saldoBins, fuerte: true },
   ];
   return (
-    <div className="grid gap-5 xl:grid-cols-3">
+    <div className="grid gap-5 lg:grid-cols-2">
       <Section titulo="Cuadratura de bins" descripcion="Lo que manda la romana es lo que se paga">
         <dl className="divide-y divide-ink-100">
           {cuadratura.map((c) => (
@@ -147,14 +154,17 @@ function Resumen({ r, contacto }: { r: R; pid: string; contacto: (typeof product
             );
           })}
         </ol>
+        <p className="mt-4 text-[12.5px] text-ink-500">
+          Día de pago: viernes, o sábado si el packing procesa ese día. Si la fruta del productor se termina antes, se le paga ese mismo día.
+        </p>
         {r.ajusteAnticipo > 0 && (
           <p className="mt-4 rounded-lg bg-amber-50 px-3 py-2 text-[12.5px] text-amber-900">
-            Si la temporada cerrara hoy, la liquidación descontaría {clp(r.ajusteAnticipo)} de anticipo por {n(r.temporada.binsContratados - r.binsRecibidos)} bins no entregados.
+            {t.cierre ? "En la liquidación se descontarán" : "Si la temporada cerrara hoy, la liquidación descontaría"} {clp(r.ajusteAnticipo)} de anticipo por {n(r.temporada.binsContratados - r.binsRecibidos)} bins no entregados.
           </p>
         )}
       </Section>
 
-      <Section titulo="Contrato y contacto">
+      <Section titulo="Contrato y contacto" className="lg:col-span-2">
         <dl className="space-y-2 text-[13.5px]">
           <div className="flex justify-between gap-3"><dt className="text-ink-500">Temporada</dt><dd>{fechaLarga(t.inicio)} – {fechaLarga(t.fin)}</dd></div>
           <div className="flex justify-between gap-3"><dt className="text-ink-500">Firma de contrato</dt><dd>{fechaLarga(t.fechaContrato)}</dd></div>
@@ -218,7 +228,7 @@ function Recepciones({ r }: { r: R }) {
 
 function Fletes({ r }: { r: R }) {
   return (
-    <div className="grid gap-5 xl:grid-cols-[1fr_320px]">
+    <div className="grid gap-5 2xl:grid-cols-[1fr_320px]">
       <Section titulo="Fletes campo → packing" descripcion="Los paga CFSCL. La factura del transportista llega por correo y se asocia al camión por patente." sinPadding>
         <TableWrap>
           <thead className="border-b border-ink-100">
@@ -293,7 +303,7 @@ function Pagos({ r }: { r: R }) {
   const tono: Record<string, Tono> = { Pagado: "verde", "Por pagar": "ambar", Programado: "gris" };
   const orden = [...r.pagos].sort((a, b) => b.vencimiento.localeCompare(a.vencimiento));
   return (
-    <div className="grid gap-5 xl:grid-cols-[1fr_300px]">
+    <div className="grid gap-5 2xl:grid-cols-[1fr_300px]">
       <Section titulo="Pagos al productor" sinPadding>
         <TableWrap>
           <thead className="border-b border-ink-100">
@@ -337,7 +347,7 @@ function Rendimiento({ r }: { r: R }) {
     { label: "Industrial", valor: r.kgIndustrial, color: COLOR_CALIDAD.Industrial },
   ];
   return (
-    <div className="grid gap-5 xl:grid-cols-[1fr_1.4fr]">
+    <div className="grid gap-5 2xl:grid-cols-[1fr_1.4fr]">
       <Section titulo="Rendimiento de la fruta" descripcion="Según los reportes de proceso del packing">
         <div className="grid grid-cols-2 gap-3">
           <div><div className="label">Exportable</div><div className="font-display text-3xl font-bold">{r.kgEntradaProc ? pct(r.pctExportable) : "—"}</div></div>

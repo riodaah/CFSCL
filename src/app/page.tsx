@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { AlertTriangle, ArrowRight, Banknote, Factory, Package, Scale, Ship, Sprout, Truck } from "lucide-react";
 import { Badge, LinkMas, PageHeader, Progress, Section, SeveridadBadge, Stat, TableWrap } from "@/components/ui";
-import { alertas, cajasOC, clienteDe, kgPorSemana, pagosProductorPorEstado, resumenTemporada, semaforoOC } from "@/lib/calc";
-import { ordenes, productores } from "@/lib/data";
+import { alertas, cajasOC, clienteDe, columnaDe, kgPorSemana, pagosProductorPorEstado, resumenTemporada, seguimientos, semaforoOC } from "@/lib/calc";
+import { ordenes, productores, productoresPendientes } from "@/lib/data";
 import { clp, clpM, fecha, fechaLarga, n, pct } from "@/lib/format";
 import { HOY, TEMPORADA_ACTUAL } from "@/lib/params";
-import { ETAPAS_OC } from "@/lib/types";
+import { COLUMNAS_OC } from "@/lib/types";
 import { Dot } from "@/components/ui";
 
 export default function Inicio() {
@@ -16,13 +16,13 @@ export default function Inicio() {
   const semanas = kgPorSemana();
   const maxKg = Math.max(...semanas.map(([, v]) => v));
   const urgentes = al.filter((a) => a.severidad === "Crítica" || a.severidad === "Alta");
-  const ocActivas = ordenes.filter((o) => o.etapa !== "Cerrada");
+  const ocActivas = ordenes.filter((o) => o.paso !== "Cerrada");
 
   return (
     <>
       <PageHeader
         titulo={`Temporada ${TEMPORADA_ACTUAL}`}
-        subtitulo={`Situación al ${fechaLarga(HOY)}. Plena cosecha: ${productores.length} productores entregando fruta al packing.`}
+        subtitulo={`Situación al ${fechaLarga(HOY)}. Plena cosecha: ${productores.length} productores con contrato entregando fruta al packing.`}
         acciones={
           <Link href="/alertas" className="btn-danger">
             <AlertTriangle size={15} /> {urgentes.length} alertas por atender
@@ -42,18 +42,19 @@ export default function Inicio() {
         {[
           {
             href: "/productores",
-            etapa: "Etapa 1",
+            etapa: "Módulo 1",
             titulo: "Productores",
             icon: Sprout,
             lineas: [
-              [`Contratos activos`, String(productores.length)],
+              [`Contratos firmados`, String(productores.length)],
+              [`Por firmar o visitar`, String(productoresPendientes.length)],
               [`Avance de cosecha`, pct(t.binsRecibidos / t.binsContratados)],
               [`Bins faltantes (guía vs romana)`, n(t.binsGuia - t.binsRecibidos)],
             ],
           },
           {
             href: "/proceso",
-            etapa: "Etapa 2",
+            etapa: "Módulo 2",
             titulo: "Proceso",
             icon: Factory,
             lineas: [
@@ -63,14 +64,15 @@ export default function Inicio() {
             ],
           },
           {
-            href: "/exportado",
-            etapa: "Etapa 3",
-            titulo: "Exportado",
+            href: "/clientes",
+            etapa: "Módulo 3",
+            titulo: "Clientes",
             icon: Ship,
             lineas: [
               [`Órdenes de compra activas`, String(ocActivas.length)],
               [`Contenedores comprometidos`, String(ocActivas.reduce((a, o) => a + o.contenedores, 0))],
               [`Clientes con pago atrasado`, String(ordenes.filter((o) => semaforoOC(o) === "rojo").length)],
+              [`Seguimientos pendientes`, String(seguimientos().length)],
             ],
           },
         ].map((e, i) => (
@@ -168,7 +170,7 @@ export default function Inicio() {
           </div>
         </Section>
 
-        <Section titulo="Pagos de hoy" descripcion="Cosecha (por bin llegado) y embalado (por kg)" acciones={<LinkMas href="/pagos">Calendario</LinkMas>} sinPadding>
+        <Section titulo="Pagos de hoy" descripcion="Cosecha (por bin llegado) y embalado (por kg)" acciones={<LinkMas href="/productores/pagos">Calendario</LinkMas>} sinPadding>
           <ul className="divide-y divide-ink-100">
             {hoy.map((p) => {
               const pr = productores.find((x) => x.id === p.productorId)!;
@@ -189,25 +191,30 @@ export default function Inicio() {
           </ul>
         </Section>
 
-        <Section titulo="Exportaciones en curso" acciones={<LinkMas href="/exportado">Ver tablero</LinkMas>} sinPadding>
+        <Section titulo="Órdenes de compra en curso" acciones={<LinkMas href="/clientes">Ver tablero</LinkMas>} sinPadding>
           <ul className="divide-y divide-ink-100">
             {ocActivas.slice(0, 6).map((o) => (
               <li key={o.id}>
-                <Link href={`/exportado/${o.id}`} className="flex items-center gap-3 px-4 py-2.5 hover:bg-ink-50">
+                <Link href={`/clientes/oc/${o.id}`} className="flex items-center gap-3 px-4 py-2.5 hover:bg-ink-50">
                   <Dot tono={semaforoOC(o)} />
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-[13.5px] font-medium">{clienteDe(o).nombre}</div>
                     <div className="text-[12px] text-ink-500">{o.id} · {o.contenedores} cont. · {n(cajasOC(o))} cajas</div>
                   </div>
-                  <Badge tono="gris">{o.etapa}</Badge>
+                  <Badge tono="gris">{o.paso}</Badge>
                 </Link>
               </li>
             ))}
           </ul>
           <div className="flex gap-1 border-t border-ink-100 px-4 py-3">
-            {ETAPAS_OC.map((e) => {
-              const c = ordenes.filter((o) => o.etapa === e).length;
-              return <div key={e} title={`${e}: ${c}`} className={`h-1.5 flex-1 rounded-full ${c ? "bg-leaf-500" : "bg-ink-100"}`} style={{ opacity: c ? 0.4 + c * 0.3 : 1 }} />;
+            {COLUMNAS_OC.map((col) => {
+              const c = ordenes.filter((o) => columnaDe(o.paso) === col.id).length;
+              return (
+                <div key={col.id} className="min-w-0 flex-1">
+                  <div className="text-[11.5px] text-ink-500">{col.titulo}</div>
+                  <div className="font-display text-[18px] font-bold tabular-nums">{c}</div>
+                </div>
+              );
             })}
           </div>
         </Section>
