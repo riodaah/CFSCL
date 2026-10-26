@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { AlertTriangle, ArrowRight, Banknote, Factory, Package, Scale, Ship, Sprout, Truck } from "lucide-react";
 import { Badge, LinkMas, PageHeader, Progress, Section, SeveridadBadge, Stat, TableWrap } from "@/components/ui";
-import { alertas, cajasOC, clienteDe, columnaDe, kgPorSemana, pagosProductorPorEstado, resumenTemporada, seguimientos, semaforoOC } from "@/lib/calc";
+import { alertas, cajasOC, clienteDe, columnaDe, kgPorSemana, metaSemanalFerrada, pagosProductorPorEstado, resumenTemporada, seguimientos, semaforoOC } from "@/lib/calc";
 import { ordenes, productores, productoresPendientes } from "@/lib/data";
 import { clp, clpM, fecha, fechaLarga, n, pct } from "@/lib/format";
 import { HOY, TEMPORADA_ACTUAL } from "@/lib/params";
@@ -73,6 +73,7 @@ export default function Inicio() {
               [`Contenedores comprometidos`, String(ocActivas.reduce((a, o) => a + o.contenedores, 0))],
               [`Clientes con pago atrasado`, String(ordenes.filter((o) => semaforoOC(o) === "rojo").length)],
               [`Seguimientos pendientes`, String(seguimientos().length)],
+              [`Ferrada: destinos con meta semanal`, `${metaSemanalFerrada().filter((m) => m.contenedores >= 2).length} de ${metaSemanalFerrada().length}`],
             ],
           },
         ].map((e, i) => (

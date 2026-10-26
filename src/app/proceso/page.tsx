@@ -65,12 +65,12 @@ export default function Proceso() {
           </div>
         </Section>
 
-        <Section titulo="Cajas por calidad y calibre" descripcion="Lo que hay para vender y comprometer en órdenes de compra" sinPadding>
+        <Section titulo="Cajas por calidad y calibre" descripcion="Lo que hay para vender. Calibre = frutas por caja: número más bajo, fruta más grande." sinPadding>
           <TableWrap>
             <thead className="border-b border-ink-100">
               <tr>
-                <th className="th">Calidad</th>
-                {CALIBRES.map((c) => <th key={c} className="th text-right">{c}</th>)}
+                <th className="th">Calidad \ calibre</th>
+                {CALIBRES.map((c) => <th key={c} className="th text-right">Cal. {c}</th>)}
                 <th className="th text-right">Total</th>
               </tr>
             </thead>

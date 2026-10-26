@@ -231,22 +231,69 @@ export interface OrdenCompra {
   recepcionCliente?: string;
 }
 
-// ───────── Ferrada · intermediación ─────────
+// ───────── Ferrada · importador europeo (Gustavo Ferrada) ─────────
+// CFSCL le busca fruta en Chile, Perú (y a futuro Ecuador), compra contenedores completos
+// a productores o exportadoras y se los despacha. No pasa por el packing propio.
+
+export const REGIONES_FERRADA = ["Europa", "Medio Oriente", "Asia"] as const;
+export type RegionFerrada = (typeof REGIONES_FERRADA)[number];
+
+export const PASOS_FERRADA = [
+  "Orden de Ferrada",
+  "Fruta comprada",
+  "Reserva naviera",
+  "Embarcada",
+  "Draft enviado",
+  "Pago 1 recibido",
+  "Set oficial enviado",
+  "En destino",
+  "Cerrada",
+] as const;
+export type PasoFerrada = (typeof PASOS_FERRADA)[number];
+
+export interface DestinoFerrada {
+  id: string;
+  puerto: string;
+  pais: string;
+  region: RegionFerrada;
+}
 
 export interface OperacionFerrada {
   id: string;
   fecha: string;
+  origenPais: "Chile" | "Perú" | "Ecuador";
+  proveedorId?: string; // productor o exportadora a quien CFSCL le compra
   producto: string;
-  origenPais: "Chile" | "Perú";
-  exportadorId: string;
-  destino: string;
+  variedad: string;
+  calibres: string;
+  destinoId: string;
   contenedores: number;
+  palletsPorContenedor: number;
   cajas: number;
   compraUsdCaja: number;
   ventaUsdCaja: number;
-  comisionUsdCaja: number;
-  estado: "Buscando fruta" | "Fruta comprada" | "Embarcada" | "Draft enviado" | "Pagada" | "Cerrada";
+  comisionUsdCaja: number; // siempre US$ 0,50
+  rebateUsdContenedor: number; // comisión que paga la naviera, variable (~US$ 1.000)
+  paso: PasoFerrada;
+  naviera?: string;
+  booking?: string;
+  barco?: string;
+  etd?: string;
+  eta?: string;
+  transitoDias?: number;
+  draftEnviado?: string;
   setOficialEnviado?: string;
+  pago1?: { vence?: string; pagado?: string };
+  pago2?: { pagado?: string };
+  documentos: { tipo: string; recibido?: string }[];
+}
+
+/** Certificados que se piden al proveedor una vez y valen de enero a diciembre */
+export interface CertificadoProveedor {
+  proveedorId: string;
+  tipo: string;
+  anio: number;
+  recibido?: string;
 }
 
 // ───────── Transversal ─────────

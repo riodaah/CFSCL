@@ -3,10 +3,13 @@
 
 import { addDays, diffDays } from "./dates";
 import {
+  certificadosProveedor,
   clientes,
+  destinosFerrada,
   distribucionCalibre,
   documentosProductor,
   exportadores,
+  operacionesFerrada,
   fletes,
   lotes,
   ordenes,
@@ -16,7 +19,7 @@ import {
   temporadas,
 } from "./data";
 import { HOY, P } from "./params";
-import { CALIBRES, CALIDADES, COLUMNAS_OC, type Alerta, type Calidad, type OrdenCompra, type PasoOC } from "./types";
+import { CALIBRES, CALIDADES, COLUMNAS_OC, type Alerta, type Calidad, type OperacionFerrada, type OrdenCompra, type PasoOC } from "./types";
 import { n } from "./format";
 
 export const cajasDeLote = (l: { cajasPorCalidad: Record<Calidad, number> }) =>
@@ -179,6 +182,62 @@ export function seguimientos() {
     .sort((a, b) => b.dias - a.dias);
 }
 
+
+// ───────── Ferrada ─────────
+
+export const destinoDe = (id: string) => destinosFerrada.find((d) => d.id === id)!;
+
+/** Lo que gana CFSCL en una operación: comisión fija + margen de compraventa + rebate de la naviera. */
+export function gananciaFerrada(o: OperacionFerrada) {
+  const comision = o.cajas * o.comisionUsdCaja;
+  const margen = o.ventaUsdCaja ? o.cajas * (o.ventaUsdCaja - o.compraUsdCaja) : 0;
+  const rebate = o.contenedores * o.rebateUsdContenedor;
+  return { comision, margen, rebate, total: comision + margen + rebate, venta: o.cajas * o.ventaUsdCaja, compra: o.cajas * o.compraUsdCaja };
+}
+
+export type EstadoPagoF = { estado: "Pagado" | "Pendiente" | "Vencido" | "Sin fecha"; texto: string; monto: number };
+
+/** Pago 1: 50% contra el draft. Pago 2: 50% entre 5 y 10 días después de la llegada. */
+export function pagosFerrada(o: OperacionFerrada): [EstadoPagoF, EstadoPagoF] {
+  const mitad = (o.cajas * o.ventaUsdCaja) / 2;
+  let p1: EstadoPagoF;
+  if (o.pago1?.pagado) p1 = { estado: "Pagado", texto: `Pagado el ${o.pago1.pagado.slice(8, 10)}/${o.pago1.pagado.slice(5, 7)}`, monto: mitad };
+  else if (o.pago1?.vence) p1 = { estado: o.pago1.vence < HOY ? "Vencido" : "Pendiente", texto: `${o.pago1.vence < HOY ? "Venció" : "Vence"} el ${o.pago1.vence.slice(8, 10)}/${o.pago1.vence.slice(5, 7)}`, monto: mitad };
+  else p1 = { estado: "Sin fecha", texto: "Al enviar el draft", monto: mitad };
+  let p2: EstadoPagoF;
+  if (o.pago2?.pagado) p2 = { estado: "Pagado", texto: `Pagado el ${o.pago2.pagado.slice(8, 10)}/${o.pago2.pagado.slice(5, 7)}`, monto: mitad };
+  else if (o.eta) {
+    const desde = addDays(o.eta, 5), hasta = addDays(o.eta, 10);
+    const f = (d: string) => `${d.slice(8, 10)}/${d.slice(5, 7)}`;
+    p2 = { estado: hasta < HOY ? "Vencido" : "Pendiente", texto: `Entre el ${f(desde)} y el ${f(hasta)}`, monto: mitad };
+  } else p2 = { estado: "Sin fecha", texto: "5 a 10 días después de la llegada", monto: mitad };
+  return [p1, p2];
+}
+
+export function setOficialBloqueadoF(o: OperacionFerrada) {
+  return !!o.draftEnviado && !o.setOficialEnviado && !o.pago1?.pagado;
+}
+
+/** Semana lunes a domingo que contiene HOY */
+export function semanaActual() {
+  const d = new Date(HOY + "T12:00:00Z");
+  const lunes = addDays(HOY, -((d.getUTCDay() + 6) % 7));
+  return { lunes, domingo: addDays(lunes, 6) };
+}
+
+/** Meta: N contenedores por destino cada semana, contados por fecha de zarpe (ETD). */
+export function metaSemanalFerrada() {
+  const { lunes, domingo } = semanaActual();
+  return destinosFerrada.map((d) => {
+    const ops = operacionesFerrada.filter((o) => o.destinoId === d.id && o.etd && o.etd >= lunes && o.etd <= domingo);
+    return { destino: d, contenedores: ops.reduce((a, o) => a + o.contenedores, 0), ops };
+  });
+}
+
+export function certificadosDe(proveedorId?: string) {
+  return proveedorId ? certificadosProveedor.filter((c) => c.proveedorId === proveedorId) : [];
+}
+
 export function pagosProductorPorEstado() {
   const hoy = pagosProductor.filter((p) => p.vencimiento === HOY && p.estado !== "Pagado");
   const proximos = pagosProductor
@@ -314,6 +373,49 @@ export function alertas(): Alerta[] {
       href: `/clientes/${s.cliente.id}`,
     }),
   );
+  operacionesFerrada.forEach((o) => {
+    const [p1] = pagosFerrada(o);
+    if (p1.estado === "Vencido") {
+      out.push({
+        id: `AL-FE-P1-${o.id}`,
+        fecha: o.pago1?.vence ?? HOY,
+        severidad: "Crítica",
+        modulo: "Ferrada",
+        titulo: `Ferrada no ha pagado el primer 50% · ${o.id}`,
+        detalle: `${o.producto} ${o.variedad} a ${destinoDe(o.destinoId).puerto}: US$ ${n(p1.monto)}. ${p1.texto}. No enviar el set oficial.`,
+        href: `/ferrada/${o.id}`,
+      });
+    }
+  });
+  metaSemanalFerrada()
+    .filter((m) => m.contenedores < P.metaSemanalDestino)
+    .forEach((m) =>
+      out.push({
+        id: `AL-FE-META-${m.destino.id}`,
+        fecha: HOY,
+        severidad: m.contenedores === 0 ? "Alta" : "Media",
+        modulo: "Ferrada",
+        titulo: `${m.destino.puerto}: ${m.contenedores} de ${P.metaSemanalDestino} contenedores esta semana`,
+        detalle: `Meta semanal de Ferrada para ${m.destino.pais}. ${m.contenedores === 0 ? "No hay ningún zarpe programado." : "Falta 1 contenedor."}`,
+        href: "/ferrada",
+      }),
+    );
+  const proveedoresActivos = new Set(operacionesFerrada.filter((o) => o.paso !== "Cerrada" && o.proveedorId).map((o) => o.proveedorId!));
+  proveedoresActivos.forEach((pid) => {
+    const faltan = certificadosDe(pid).filter((c) => !c.recibido);
+    if (faltan.length) {
+      const e = exportadorDe(pid);
+      out.push({
+        id: `AL-FE-CERT-${pid}`,
+        fecha: HOY,
+        severidad: "Alta",
+        modulo: "Ferrada",
+        titulo: `Faltan certificados 2027 · ${e.nombre}`,
+        detalle: `${faltan.map((c) => c.tipo).join(", ")}. Se piden una vez antes del primer contenedor. Contacto: ${e.contacto} (${e.telefono}).`,
+        href: "/ferrada",
+      });
+    }
+  });
   out.push({
     id: "AL-RET-1",
     fecha: "2027-03-01",

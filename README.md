@@ -15,7 +15,7 @@ Esta versión es una **maqueta navegable con datos de ejemplo** para validar con
 | `/clientes` | **Módulo 3.** Tablero de órdenes de compra en 3 columnas y fruta disponible |
 | `/clientes/oc/[id]` | Orden de compra: disponibilidad, negociación, logística, pagos editables, draft vs set oficial |
 | `/clientes/lista`, `/clientes/[id]` | Clientes con calificación, destinos y seguimiento |
-| `/ferrada` | Intermediación con comisión por caja |
+| `/ferrada`, `/ferrada/[id]` | Ferrada (importador europeo): tablero por destino, meta semanal, comisión US$ 0,50/caja, margen, rebate, pagos 50/50, certificados del proveedor |
 | `/alertas`, `/configuracion` | Alertas y parámetros de negocio |
 
 ## Estructura

@@ -78,12 +78,12 @@ export default function TableroClientes() {
       <Tablero inicial={cards} />
 
       <div className="mt-6 grid gap-5 2xl:grid-cols-[1.3fr_1fr]">
-        <Section titulo="Fruta disponible para vender" descripcion="Cajas embaladas en los últimos 14 días, menos lo comprometido en órdenes con naviera reservada. Contra esto se revisa cada orden nueva." sinPadding>
+        <Section titulo="Fruta disponible para vender" descripcion="Cajas embaladas en los últimos 14 días, menos lo comprometido en órdenes con naviera reservada. Calibre = frutas por caja: número más bajo, fruta más grande." sinPadding>
           <TableWrap>
             <thead className="border-b border-ink-100">
               <tr>
-                <th className="th">Calidad</th>
-                {CALIBRES.map((c) => <th key={c} className="th text-right">{c}</th>)}
+                <th className="th">Calidad \ calibre</th>
+                {CALIBRES.map((c) => <th key={c} className="th text-right">Cal. {c}</th>)}
               </tr>
             </thead>
             <tbody>

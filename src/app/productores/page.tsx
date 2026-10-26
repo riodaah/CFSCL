@@ -3,7 +3,7 @@ import clsx from "clsx";
 import { CalendarClock, Container, Mail, MessageCircle, Phone, Plus, Upload } from "lucide-react";
 import { Badge, PageHeader, Progress, Section, Stat, TableWrap } from "@/components/ui";
 import { resumenTemporada, type ResumenProductor } from "@/lib/calc";
-import { comprasCajaTerminada, exportadores, ordenes, productores, productoresInactivos, productoresPendientes, TEMPORADA_SIGUIENTE } from "@/lib/data";
+import { comprasCajaTerminada, exportadores, operacionesFerrada, ordenes, productores, productoresInactivos, productoresPendientes, TEMPORADA_SIGUIENTE } from "@/lib/data";
 import { clpM, fecha, n, pct, usd } from "@/lib/format";
 import { TEMPORADA_ACTUAL } from "@/lib/params";
 
@@ -249,7 +249,12 @@ function Exportadoras() {
                 </div>
                 <div className="min-w-0">
                   <div className="label mb-1.5">Compras esta temporada</div>
-                  {compras.length === 0 && <p className="text-[13px] text-ink-500">Sin compras para órdenes de CFSCL. Ver Ferrada.</p>}
+                  {compras.length === 0 && <p className="text-[13px] text-ink-500">Sin compras para clientes directos.</p>}
+                  {operacionesFerrada.some((o) => o.proveedorId === e.id) && (
+                    <Link href="/ferrada" className="mb-2 block rounded-lg bg-sky-50 px-3 py-2 text-[12.5px] text-sky-800 hover:underline">
+                      {operacionesFerrada.filter((o) => o.proveedorId === e.id).length} operaciones para Ferrada
+                    </Link>
+                  )}
                   <ul className="space-y-2">
                     {compras.map((c) => {
                       const oc = ordenes.find((o) => o.id === c.ocId);

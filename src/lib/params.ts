@@ -20,7 +20,10 @@ export const PARAMS = {
   precioIndustrialKg: { valor: 90, unidad: "CLP/kg", label: "Precio venta industrial", nota: "Referencial, jugo y pulpa" },
   cajasPorContenedor: { valor: 1029, unidad: "cajas", label: "Cajas por contenedor", nota: "21 pallets" },
   diasSeguimiento: { valor: 7, unidad: "días", label: "Aviso de seguimiento a clientes", nota: "Sin contacto con un cliente activo" },
-  comisionFerrada: { valor: 0.05, unidad: "USD/caja", label: "Comisión Ferrada", nota: "Por caja intermediada", porConfirmar: true },
+  comisionFerrada: { valor: 0.5, unidad: "USD/caja", label: "Comisión Ferrada", nota: "Siempre se cobra, por cada caja" },
+  rebateNaviera: { valor: 1000, unidad: "USD/cont.", label: "Rebate de naviera (Ferrada)", nota: "Variable; lo paga la naviera por cargar con ella", porConfirmar: true },
+  metaSemanalDestino: { valor: 2, unidad: "cont./semana", label: "Meta Ferrada por destino", nota: "Contenedores que deben salir cada semana a cada destino" },
+  diasPago2Ferrada: { valor: 5, unidad: "a 10 días", label: "Pago 2 de Ferrada", nota: "Entre 5 y 10 días después de la llegada" },
 } as const;
 
 export const P = Object.fromEntries(Object.entries(PARAMS).map(([k, v]) => [k, v.valor])) as {
