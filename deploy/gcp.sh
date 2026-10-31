@@ -46,6 +46,21 @@ pedir() {
   elif ! gcloud secrets describe "$nombre" >/dev/null 2>&1; then secreto "$nombre" "pendiente"; fi
 }
 
+# En proyectos nuevos Cloud Build usa la cuenta de servicio por defecto de Compute,
+# que (por política de la organización) nace sin permisos. Se le dan los mínimos para construir.
+permisos_build() {
+  echo "▸ Permisos de Cloud Build"
+  local num cb
+  num="$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')"
+  cb="${num}-compute@developer.gserviceaccount.com"
+  for rol in roles/cloudbuild.builds.builder roles/artifactregistry.writer roles/storage.objectViewer roles/logging.logWriter; do
+    gcloud projects add-iam-policy-binding "$PROJECT_ID" --member="serviceAccount:${cb}" --role="$rol" --condition=None >/dev/null
+    echo "  ✓ $rol → $cb"
+  done
+  # Para que Cloud Run pueda usar la cuenta de servicio de la app al desplegar
+  gcloud iam service-accounts add-iam-policy-binding "$SA" --member="serviceAccount:${cb}" --role=roles/iam.serviceAccountUser >/dev/null
+}
+
 setup() {
   echo "▸ Activando APIs (tarda 1 a 2 minutos la primera vez)"
   gcloud services enable run.googleapis.com artifactregistry.googleapis.com cloudbuild.googleapis.com \
@@ -64,6 +79,8 @@ JSON
   echo "▸ Cuenta de servicio de la app"
   gcloud iam service-accounts describe "$SA" >/dev/null 2>&1 ||
     gcloud iam service-accounts create "$SA_NAME" --display-name="CFSCL app (Cloud Run)"
+
+  permisos_build
 
   echo "▸ Bucket privado de documentos: gs://${BUCKET}"
   gcloud storage buckets describe "gs://${BUCKET}" >/dev/null 2>&1 ||
@@ -132,7 +149,8 @@ google() {
 
 case "${1:-}" in
   setup) setup ;;
+  permisos) permisos_build ;;
   deploy) deploy ;;
   google) google ;;
-  *) echo "Uso: bash deploy/gcp.sh setup | deploy | google"; exit 1 ;;
+  *) echo "Uso: bash deploy/gcp.sh setup | permisos | deploy | google"; exit 1 ;;
 esac
