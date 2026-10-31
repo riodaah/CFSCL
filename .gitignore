@@ -6,3 +6,5 @@ out
 next-env.d.ts
 .env*
 .DS_Store
+.uploads
+!.env.example

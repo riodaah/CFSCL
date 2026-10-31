@@ -43,6 +43,9 @@ body {
   .btn-ghost {
     @apply btn border border-ink-200 bg-white text-ink-700 hover:bg-ink-50;
   }
+  .input {
+    @apply w-full rounded-lg border border-ink-200 bg-white px-3 py-2 text-[14px] text-ink-900 placeholder:text-ink-400 focus:border-leaf-500 focus:outline-none focus:ring-2 focus:ring-leaf-500/20;
+  }
   .btn-danger {
     @apply btn border border-brand-100 bg-brand-50 text-brand-700 hover:bg-brand-100;
   }

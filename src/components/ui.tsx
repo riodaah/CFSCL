@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
-import type { Severidad } from "@/lib/types";
+type Severidad = "Crítica" | "Alta" | "Media" | "Info";
 
 export function PageHeader({
   titulo,
