@@ -19,6 +19,7 @@ REPO="${REPO:-cfscl}"
 BUCKET="${BUCKET:-${PROJECT_ID}-documentos}"
 SA_NAME="cfscl-app"
 SA="${SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
+# Separados por coma: se pasan a Cloud Run con delimitador "|" para no romper la lista
 ADMIN_EMAILS="${ADMIN_EMAILS:-da.morande@gmail.com,francisco@cfs.cl}"
 IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/app"
 
@@ -121,7 +122,7 @@ deploy() {
     --min-instances=0 --max-instances=3 \
     --concurrency=40 --timeout=120 \
     --cpu-boost \
-    --set-env-vars="GCS_BUCKET=${BUCKET},ADMIN_EMAILS=${ADMIN_EMAILS}${url:+,NEXTAUTH_URL=${url}}" \
+    --set-env-vars="^|^GCS_BUCKET=${BUCKET}|ADMIN_EMAILS=${ADMIN_EMAILS}${url:+|NEXTAUTH_URL=${url}}" \
     --set-secrets="DATABASE_URL=DATABASE_URL:latest,NEXTAUTH_SECRET=NEXTAUTH_SECRET:latest,GOOGLE_CLIENT_ID=GOOGLE_CLIENT_ID:latest,GOOGLE_CLIENT_SECRET=GOOGLE_CLIENT_SECRET:latest,API_KEY=API_KEY:latest"
 
   if [[ -z "$url" ]]; then
