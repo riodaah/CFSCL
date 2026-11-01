@@ -24,6 +24,8 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   session: { strategy: "jwt", maxAge: 60 * 60 * 12 },
+  // Explícito para que coincida con el middleware: tras el proxy de Cloud Run el origen es https
+  useSecureCookies: process.env.NODE_ENV === "production",
   pages: { signIn: "/login", error: "/login" },
   callbacks: {
     async signIn({ user }) {
