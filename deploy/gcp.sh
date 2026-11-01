@@ -5,6 +5,7 @@
 #   git clone -b app https://github.com/riodaah/cfscl.git && cd cfscl
 #   bash deploy/gcp.sh setup      # una vez: APIs, bucket, cuenta de servicio, secretos
 #   bash deploy/gcp.sh deploy     # cada vez que haya cambios
+#   bash deploy/gcp.sh dominio    # una vez: conecta sistema.cfscl.cl
 #   bash deploy/gcp.sh google     # cargar o cambiar el Client ID/Secret de Google
 #
 # Requisitos: tener a mano la cadena de conexión de Neon (con pooling) y,
@@ -13,10 +14,13 @@
 set -euo pipefail
 
 PROJECT_ID="${PROJECT_ID:-cfscl-513102}"
-REGION="${REGION:-southamerica-east1}"     # São Paulo: misma zona que la base en Neon
+# us-east4 (Virginia): admite dominio propio en Cloud Run y queda junto a la base en Neon (aws-us-east-1).
+# São Paulo (southamerica-east1) NO admite asignación de dominios.
+REGION="${REGION:-us-east4}"
 SERVICE="${SERVICE:-cfscl}"
 REPO="${REPO:-cfscl}"
-BUCKET="${BUCKET:-${PROJECT_ID}-documentos}"
+BUCKET="${BUCKET:-${PROJECT_ID}-docs}"
+DOMINIO="${DOMINIO:-sistema.cfscl.cl}"      # dirección pública de la app
 SA_NAME="cfscl-app"
 SA="${SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
 # Separados por coma: se pasan a Cloud Run con delimitador "|" para no romper la lista
@@ -110,8 +114,6 @@ deploy() {
   gcloud builds submit --tag "${IMAGE}:${tag}" .
 
   echo "▸ Desplegando en Cloud Run"
-  local url
-  url="$(gcloud run services describe "$SERVICE" --region="$REGION" --format='value(status.url)' 2>/dev/null || true)"
   gcloud run deploy "$SERVICE" \
     --image="${IMAGE}:${tag}" \
     --region="$REGION" \
@@ -122,18 +124,27 @@ deploy() {
     --min-instances=0 --max-instances=3 \
     --concurrency=40 --timeout=120 \
     --cpu-boost \
-    --set-env-vars="^|^GCS_BUCKET=${BUCKET}|ADMIN_EMAILS=${ADMIN_EMAILS}${url:+|NEXTAUTH_URL=${url}}" \
+    --set-env-vars="^|^GCS_BUCKET=${BUCKET}|ADMIN_EMAILS=${ADMIN_EMAILS}|AUTH_TRUST_HOST=true" \
     --set-secrets="DATABASE_URL=DATABASE_URL:latest,NEXTAUTH_SECRET=NEXTAUTH_SECRET:latest,GOOGLE_CLIENT_ID=GOOGLE_CLIENT_ID:latest,GOOGLE_CLIENT_SECRET=GOOGLE_CLIENT_SECRET:latest,API_KEY=API_KEY:latest"
 
-  if [[ -z "$url" ]]; then
-    url="$(gcloud run services describe "$SERVICE" --region="$REGION" --format='value(status.url)')"
-    gcloud run services update "$SERVICE" --region="$REGION" --update-env-vars="NEXTAUTH_URL=${url}" >/dev/null
-  fi
+  local run_url
+  run_url="$(gcloud run services describe "$SERVICE" --region="$REGION" --format='value(status.url)')"
   echo
-  echo "✓ App en: ${url}"
-  echo "  Salud:  ${url}/api/health"
-  echo "  En el cliente OAuth de Google, la URI de redirección autorizada debe ser:"
-  echo "  ${url}/api/auth/callback/google"
+  echo "✓ App publicada"
+  echo "  Dirección oficial: https://${DOMINIO}   (requiere: bash deploy/gcp.sh dominio)"
+  echo "  Dirección técnica: ${run_url}"
+  echo "  Salud:             ${run_url}/api/health"
+}
+
+# Asigna sistema.cfscl.cl al servicio. Antes hay que verificar cfscl.cl (ver README).
+dominio() {
+  gcloud beta run domain-mappings describe --domain="$DOMINIO" --region="$REGION" >/dev/null 2>&1 ||
+    gcloud beta run domain-mappings create --service="$SERVICE" --domain="$DOMINIO" --region="$REGION"
+  echo
+  echo "Crea este registro en el DNS de cfscl.cl (donde esté administrado el dominio):"
+  gcloud beta run domain-mappings describe --domain="$DOMINIO" --region="$REGION" \
+    --format='table[box](status.resourceRecords.name:label=NOMBRE,status.resourceRecords.type:label=TIPO,status.resourceRecords.rrdata:label=VALOR)'
+  echo "El certificado HTTPS se emite solo entre 15 minutos y unas horas después de que el DNS apunte bien."
 }
 
 # Carga (o cambia) las credenciales de Google y crea una revisión nueva que las use
@@ -152,6 +163,7 @@ case "${1:-}" in
   setup) setup ;;
   permisos) permisos_build ;;
   deploy) deploy ;;
+  dominio) dominio ;;
   google) google ;;
-  *) echo "Uso: bash deploy/gcp.sh setup | permisos | deploy | google"; exit 1 ;;
+  *) echo "Uso: bash deploy/gcp.sh setup | permisos | deploy | dominio | google"; exit 1 ;;
 esac

@@ -9,8 +9,8 @@ Sistema de Central Frutícola Sur. Piloto: **operaciones de Ferrada** (proveedor
 
 | Pieza | Servicio | Costo inicial |
 |---|---|---|
-| App (pantallas + API) | Next.js 15 en **Cloud Run**, `southamerica-east1`, 0 instancias mínimas | Capa gratuita |
-| Base de datos | **Neon Postgres 17**, proyecto `cfscl` (`late-field-47244055`), São Paulo | Capa gratuita |
+| App (pantallas + API) | Next.js 15 en **Cloud Run**, `us-east4` (Virginia), 0 instancias mínimas, dominio `sistema.cfscl.cl` | Capa gratuita |
+| Base de datos | **Neon Postgres 17**, proyecto `cfscl` (`quiet-salad-63906823`), aws-us-east-1 (Virginia) | Capa gratuita |
 | Documentos | **Cloud Storage**, bucket privado con versionado | Centavos |
 | Secretos | Secret Manager | Capa gratuita |
 | Login | Google (next-auth). Solo entran los correos autorizados en Configuración | Gratis |
@@ -50,18 +50,13 @@ Neon → proyecto **cfscl** → **Connect** → rama `main`, base `cfscl`, rol `
 
 ### 2. Cliente OAuth de Google (login)
 
-En la consola de GCP, proyecto **cfscl-513102**:
+En la consola de GCP, proyecto **cfscl-513102** → Google Auth Platform → Clientes → cliente web:
 
-1. **APIs y servicios → Pantalla de consentimiento de OAuth** (Google Auth Platform):
-   - Tipo **Externo**; nombre "CFS · Sistema de gestión"; correo de soporte.
-   - En **Público**, publicar la app (estado "En producción"). Solo pide nombre, correo y perfil, así que no requiere verificación de Google.
-2. **Credenciales → Crear credenciales → ID de cliente de OAuth → Aplicación web**:
-   - Orígenes autorizados: `https://cfscl-230628636540.southamerica-east1.run.app`
-   - URI de redirección autorizados: `https://cfscl-230628636540.southamerica-east1.run.app/api/auth/callback/google`
-   - Para probar en local, agregar también `http://localhost:3000` y `http://localhost:3000/api/auth/callback/google`.
-3. Copiar el **Client ID** y el **Client Secret**.
+- Orígenes autorizados: `https://sistema.cfscl.cl` y la dirección técnica `https://cfscl-230628636540.us-east4.run.app`
+- URI de redirección autorizados: las mismas dos terminadas en `/api/auth/callback/google`
+- Para local: `http://localhost:3000` y `http://localhost:3000/api/auth/callback/google`
 
-(La URL de Cloud Run sigue el formato `https://SERVICIO-NUMERO_PROYECTO.REGION.run.app`. Si al desplegar sale otra, usa la que imprime el script.)
+La app toma la dirección desde la que se entra (AUTH_TRUST_HOST), así que el login funciona en ambas.
 
 ### 3. Correr el script
 
@@ -69,7 +64,16 @@ En la consola de GCP, proyecto **cfscl-513102**:
 git clone -b app https://github.com/riodaah/cfscl.git && cd cfscl
 bash deploy/gcp.sh setup    # APIs, bucket, cuenta de servicio y secretos (pide Neon y Google)
 bash deploy/gcp.sh deploy   # construye la imagen y publica en Cloud Run (5 a 8 minutos)
+bash deploy/gcp.sh dominio  # una vez: conecta sistema.cfscl.cl e imprime el registro DNS
 ```
+
+### Dominio propio
+
+Cloud Run solo admite dominio propio en algunas regiones (no en São Paulo); por eso la app vive en `us-east4`.
+
+1. Verificar `cfscl.cl` una vez: `gcloud domains verify cfscl.cl` abre Search Console; agregar el registro TXT que indica en el DNS del dominio y presionar Verificar. Debe hacerse con la misma cuenta que despliega.
+2. `bash deploy/gcp.sh dominio` y crear en el DNS el registro que imprime (CNAME `sistema` → `ghs.googlehosted.com.`).
+3. El certificado HTTPS se emite solo en 15 minutos a unas horas.
 
 - Para actualizar después de cambios: `git pull && bash deploy/gcp.sh deploy`.
 - Para cargar o cambiar las credenciales de Google: `bash deploy/gcp.sh google`.
