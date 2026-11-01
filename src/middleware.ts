@@ -15,5 +15,5 @@ export default bypass
 
 // Todo protegido salvo login, auth, salud, API con llave propia y estáticos.
 export const config = {
-  matcher: ["/((?!login|api/auth|api/health|api/v1|_next/static|_next/image|logo-cfs.png|favicon.ico).*)"],
+  matcher: ["/((?!login|api/auth|api/health|api/v1|_next/static|_next/image|logo-cfs.png|favicon.ico|manifest.webmanifest|icon-|apple-touch-icon).*)"],
 };

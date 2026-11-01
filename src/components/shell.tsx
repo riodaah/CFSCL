@@ -3,21 +3,20 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
 import clsx from "clsx";
 import { signOut } from "next-auth/react";
-import { Factory, Handshake, LayoutDashboard, LogOut, Menu, Settings, Ship, Sprout, Truck, X } from "lucide-react";
+import { Factory, Handshake, LayoutDashboard, LogOut, Settings, Ship, Sprout, Truck } from "lucide-react";
 
 const NAV = [
-  { grupo: "General", items: [{ href: "/", label: "Inicio", icon: LayoutDashboard }] },
+  { grupo: "General", items: [{ href: "/", label: "Inicio", corto: "Inicio", icon: LayoutDashboard }] },
   {
     grupo: "Ferrada",
     items: [
-      { href: "/ferrada", label: "Operaciones", icon: Handshake },
-      { href: "/proveedores", label: "Proveedores", icon: Truck },
+      { href: "/ferrada", label: "Operaciones", corto: "Operaciones", icon: Handshake },
+      { href: "/proveedores", label: "Proveedores", corto: "Proveedores", icon: Truck },
     ],
   },
-  { grupo: "Control", items: [{ href: "/configuracion", label: "Configuración", icon: Settings }] },
+  { grupo: "Control", items: [{ href: "/configuracion", label: "Configuración", corto: "Ajustes", icon: Settings }] },
 ];
 
 const PRONTO = [
@@ -26,7 +25,8 @@ const PRONTO = [
   { label: "Clientes directos", icon: Ship },
 ];
 
-const HREFS = NAV.flatMap((g) => g.items.map((i) => i.href));
+const ITEMS = NAV.flatMap((g) => g.items);
+const HREFS = ITEMS.map((i) => i.href);
 function activo(path: string, href: string) {
   if (href === "/") return path === "/";
   const coincide = (h: string) => path === h || path.startsWith(h + "/");
@@ -34,7 +34,7 @@ function activo(path: string, href: string) {
   return !HREFS.some((h) => h !== href && h.length > href.length && coincide(h));
 }
 
-function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
+function Sidebar() {
   const path = usePathname();
   return (
     <nav className="flex flex-col gap-5">
@@ -43,15 +43,15 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
           <div className="px-3 pb-1.5 font-mono text-[10.5px] uppercase tracking-[0.1em] text-leaf-100/50">{g.grupo}</div>
           <ul className="flex flex-col gap-0.5">
             {g.items.map((it) => {
-              const active = activo(path, it.href);
+              const act = activo(path, it.href);
               const Icon = it.icon;
               return (
                 <li key={it.href}>
                   <Link
                     href={it.href}
-                    onClick={onNavigate}
-                    className={clsx("flex items-center gap-2.5 rounded-lg px-3 py-2 text-[14px] transition", active ? "text-white" : "text-leaf-100/80 hover:bg-white/5 hover:text-white")}
-                    style={active ? { backgroundColor: "rgba(255,255,255,.12)" } : undefined}
+                    aria-current={act ? "page" : undefined}
+                    className={clsx("flex items-center gap-2.5 rounded-lg px-3 py-2 text-[14px] transition", act ? "text-white" : "text-leaf-100/80 hover:bg-white/5 hover:text-white")}
+                    style={act ? { backgroundColor: "rgba(255,255,255,.12)" } : undefined}
                   >
                     <Icon size={17} strokeWidth={1.8} aria-hidden />
                     <span className="flex-1">{it.label}</span>
@@ -77,6 +77,39 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
+/** Barra de pestañas inferior para teléfono y tablet: lo principal siempre a un toque del pulgar. */
+function BarraInferior() {
+  const path = usePathname();
+  return (
+    <nav
+      aria-label="Navegación principal"
+      className="fixed inset-x-0 bottom-0 z-30 border-t border-ink-200 bg-white/95 backdrop-blur lg:hidden"
+      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+    >
+      <ul className="mx-auto grid h-16 max-w-xl grid-cols-4">
+        {ITEMS.map((it) => {
+          const act = activo(path, it.href);
+          const Icon = it.icon;
+          return (
+            <li key={it.href}>
+              <Link
+                href={it.href}
+                aria-current={act ? "page" : undefined}
+                className={clsx("flex h-full flex-col items-center justify-center gap-1 text-[11.5px] font-medium", act ? "text-leaf-700" : "text-ink-500")}
+              >
+                <span className={clsx("flex h-7 w-14 items-center justify-center rounded-full transition", act && "bg-leaf-50")}>
+                  <Icon size={21} strokeWidth={act ? 2.2 : 1.8} aria-hidden />
+                </span>
+                {it.corto}
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
+  );
+}
+
 function Brand() {
   return (
     <div className="flex items-center gap-3 px-3">
@@ -94,9 +127,6 @@ function Brand() {
 const ROL = { admin: "Administrador", operaciones: "Operaciones", lectura: "Solo lectura" } as const;
 
 export function Shell({ children, usuario }: { children: React.ReactNode; usuario: { nombre: string; email: string; rol: keyof typeof ROL } }) {
-  const [open, setOpen] = useState(false);
-  const path = usePathname();
-  useEffect(() => setOpen(false), [path]);
   const iniciales = usuario.nombre
     .split(/\s+/)
     .slice(0, 2)
@@ -108,51 +138,33 @@ export function Shell({ children, usuario }: { children: React.ReactNode; usuari
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col gap-7 overflow-y-auto bg-leaf-900 py-5 lg:flex">
         <Brand />
         <div className="px-2">
-          <NavLinks />
+          <Sidebar />
         </div>
       </aside>
 
-      {open && (
-        <div className="fixed inset-0 z-40 lg:hidden">
-          <button aria-label="Cerrar menú" className="absolute inset-0 bg-black/40" onClick={() => setOpen(false)} />
-          <aside className="absolute inset-y-0 left-0 flex w-72 flex-col gap-6 overflow-y-auto bg-leaf-900 py-5">
-            <div className="flex items-center justify-between pr-3">
-              <Brand />
-              <button aria-label="Cerrar menú" onClick={() => setOpen(false)} className="text-white/80">
-                <X size={20} />
-              </button>
-            </div>
-            <div className="px-2">
-              <NavLinks onNavigate={() => setOpen(false)} />
-            </div>
-          </aside>
-        </div>
-      )}
-
-      <header className="sticky top-0 z-20 border-b border-ink-200 bg-white/90 backdrop-blur">
-        <div className="flex items-center gap-3 px-4 py-2.5 sm:px-6">
-          <button aria-label="Abrir menú" className="text-ink-700 lg:hidden" onClick={() => setOpen(true)}>
-            <Menu size={22} />
-          </button>
-          <div className="flex items-center gap-2 lg:hidden">
-            <Image src="/logo-cfs.png" alt="CFS" width={32} height={27} />
-          </div>
-          <div className="ml-auto flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-leaf-50 font-display text-sm font-bold text-leaf-700">{iniciales || "?"}</div>
+      <header className="sticky top-0 z-20 border-b border-ink-200 bg-white/90 backdrop-blur" style={{ paddingTop: "env(safe-area-inset-top)" }}>
+        <div className="flex items-center gap-3 px-4 py-2 sm:px-6">
+          <Link href="/" className="flex items-center gap-2 lg:hidden" aria-label="Inicio">
+            <Image src="/logo-cfs.png" alt="" width={34} height={29} />
+            <span className="font-display text-[15px] font-bold text-ink-900">Sistema CFS</span>
+          </Link>
+          <div className="ml-auto flex items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-2" title={usuario.email}>
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-leaf-50 font-display text-sm font-bold text-leaf-700">{iniciales || "?"}</div>
               <div className="hidden leading-tight sm:block">
                 <div className="text-sm font-medium">{usuario.nombre}</div>
                 <div className="text-[11.5px] text-ink-500">{ROL[usuario.rol]}</div>
               </div>
             </div>
-            <button type="button" onClick={() => signOut({ callbackUrl: "/login" })} className="btn-ghost px-2 py-1" title="Cerrar sesión">
-              <LogOut size={15} /> <span className="hidden sm:inline">Salir</span>
+            <button type="button" onClick={() => signOut({ callbackUrl: "/login" })} className="btn-ghost px-2.5" title="Cerrar sesión" aria-label="Cerrar sesión">
+              <LogOut size={16} /> <span className="hidden sm:inline">Salir</span>
             </button>
           </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-[1400px] px-4 pb-16 pt-6 sm:px-6">{children}</main>
+      <main className="pb-nav mx-auto max-w-[1400px] px-4 pt-5 sm:px-6 sm:pt-6 lg:pb-16">{children}</main>
+      <BarraInferior />
     </div>
   );
 }

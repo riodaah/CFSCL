@@ -39,6 +39,19 @@ export default async function Operacion({ params }: { params: Promise<{ id: stri
   const edita = u.rol !== "lectura";
   const hito = (h: Parameters<typeof registrarHito>[1]) => registrarHito.bind(null, o.id, h);
   const tiposCargados = new Set(docs.map((x) => x.tipo));
+  const siguiente = PASOS_FERRADA[Math.min(idx + 1, PASOS_FERRADA.length - 1)];
+  const botonesHito = (
+    <>
+      {!o.draftEnviado && <BotonAccion accion={hito("draft")} className="btn-primary">Draft enviado hoy</BotonAccion>}
+      {o.draftEnviado && !o.pago1Pagado && <BotonAccion accion={hito("pago1")} className="btn-primary">Pago 1 recibido hoy</BotonAccion>}
+      {o.pago1Pagado && !o.setOficialEnviado && <BotonAccion accion={hito("set")} className="btn-primary">Set oficial enviado hoy</BotonAccion>}
+      {o.setOficialEnviado && !o.pago2Pagado && <BotonAccion accion={hito("pago2")} className="btn-primary" confirmar="¿Cerrar? Toca de nuevo">Pago 2 recibido hoy</BotonAccion>}
+      <BotonAccion accion={hito("siguiente")} className="btn-ghost lg:ml-auto" title={`Avanzar a ${siguiente}`}>
+        <span className="lg:hidden">Avanzar paso</span>
+        <span className="hidden lg:inline">Avanzar a «{siguiente}»</span> <ChevronRight size={14} />
+      </BotonAccion>
+    </>
+  );
 
   return (
     <>
@@ -52,30 +65,41 @@ export default async function Operacion({ params }: { params: Promise<{ id: stri
         acciones={edita && <Link href={`/ferrada/${o.id}/editar`} className="btn-ghost"><Pencil size={14} /> Editar</Link>}
       />
 
-      <div className="card mb-5 overflow-x-auto p-4">
-        <ol className="flex min-w-max items-center gap-2">
-          {PASOS_FERRADA.map((e, i) => (
-            <li key={e} className="flex items-center gap-2">
-              <span className={clsx("flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-semibold", i < idx || o.paso === "Cerrada" ? "bg-leaf-500 text-white" : i === idx ? "bg-leaf-50 text-leaf-700 ring-2 ring-leaf-500" : "bg-ink-100 text-ink-400")}>
-                {i < idx || o.paso === "Cerrada" ? <Check size={13} /> : i + 1}
-              </span>
-              <span className={clsx("text-[13px]", i === idx ? "font-semibold text-ink-900" : "text-ink-500")}>{e}</span>
-              {i < PASOS_FERRADA.length - 1 && <span className={clsx("mx-1 h-px w-5", i < idx ? "bg-leaf-500" : "bg-ink-200")} />}
-            </li>
-          ))}
-        </ol>
-        {edita && o.paso !== "Cerrada" && (
-          <div className="mt-4 flex flex-wrap gap-2 border-t border-ink-100 pt-3">
-            {!o.draftEnviado && <BotonAccion accion={hito("draft")}>Draft enviado hoy</BotonAccion>}
-            {o.draftEnviado && !o.pago1Pagado && <BotonAccion accion={hito("pago1")} className="btn-primary">Pago 1 recibido hoy</BotonAccion>}
-            {o.pago1Pagado && !o.setOficialEnviado && <BotonAccion accion={hito("set")} className="btn-primary">Set oficial enviado hoy</BotonAccion>}
-            {o.setOficialEnviado && !o.pago2Pagado && <BotonAccion accion={hito("pago2")} confirmar="¿Cerrar operación? Clic de nuevo">Pago 2 recibido hoy</BotonAccion>}
-            <BotonAccion accion={hito("siguiente")} className="btn-ghost ml-auto">
-              Avanzar a «{PASOS_FERRADA[Math.min(idx + 1, PASOS_FERRADA.length - 1)]}» <ChevronRight size={14} />
-            </BotonAccion>
+      <div className="card mb-5 p-4">
+        {/* Teléfono y tablet vertical: paso actual compacto */}
+        <div className="lg:hidden">
+          <div className="flex items-baseline justify-between gap-2">
+            <span className="text-[15px] font-semibold text-ink-900">{o.paso}</span>
+            <span className="text-[12.5px] text-ink-500">Paso {idx + 1} de {PASOS_FERRADA.length}</span>
           </div>
-        )}
+          <div className="mt-2 flex gap-1">
+            {PASOS_FERRADA.map((x, i) => <div key={x} className={clsx("h-2 flex-1 rounded-full", i < idx || o.paso === "Cerrada" ? "bg-leaf-500" : i === idx ? "bg-leaf-500/50" : "bg-ink-200")} />)}
+          </div>
+          {o.paso !== "Cerrada" && <div className="mt-1.5 text-[12.5px] text-ink-500">Sigue: {PASOS_FERRADA[idx + 1]}</div>}
+        </div>
+        {/* Escritorio y tablet horizontal: todos los pasos */}
+        <div className="hidden overflow-x-auto lg:block">
+          <ol className="flex min-w-max items-center gap-2">
+            {PASOS_FERRADA.map((e, i) => (
+              <li key={e} className="flex items-center gap-2">
+                <span className={clsx("flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-semibold", i < idx || o.paso === "Cerrada" ? "bg-leaf-500 text-white" : i === idx ? "bg-leaf-50 text-leaf-700 ring-2 ring-leaf-500" : "bg-ink-100 text-ink-400")}>
+                  {i < idx || o.paso === "Cerrada" ? <Check size={13} /> : i + 1}
+                </span>
+                <span className={clsx("text-[13px]", i === idx ? "font-semibold text-ink-900" : "text-ink-500")}>{e}</span>
+                {i < PASOS_FERRADA.length - 1 && <span className={clsx("mx-1 h-px w-5", i < idx ? "bg-leaf-500" : "bg-ink-200")} />}
+              </li>
+            ))}
+          </ol>
+        </div>
+        {edita && o.paso !== "Cerrada" && <div className="mt-4 hidden flex-wrap gap-2 border-t border-ink-100 pt-3 lg:flex">{botonesHito}</div>}
       </div>
+
+      {/* Teléfono y tablet: la próxima acción fija sobre la barra inferior */}
+      {edita && o.paso !== "Cerrada" && (
+        <div className="fixed inset-x-0 z-20 border-t border-ink-200 bg-white/95 px-4 py-3 backdrop-blur lg:hidden" style={{ bottom: "var(--nav-h)" }}>
+          <div className="mx-auto flex max-w-3xl gap-2 [&>span]:flex-1 [&>span>button]:w-full">{botonesHito}</div>
+        </div>
+      )}
 
       {bloqueado && (
         <div className="mb-5 flex items-start gap-3 rounded-xl border border-brand-100 bg-brand-50 px-4 py-3 text-[14px] text-brand-700">
@@ -84,7 +108,7 @@ export default async function Operacion({ params }: { params: Promise<{ id: stri
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
         <Stat label="Ganancia CFSCL" valor={usd(g.total)} tono="ok" detalle="Comisión + margen + rebate" />
         <Stat label="Comisión" valor={usd(g.comision)} detalle={`${n(o.cajas)} cajas × ${usd2(o.comisionUsdCaja)}`} />
         <Stat label="Margen compraventa" valor={o.ventaUsdCaja != null && o.compraUsdCaja != null ? usd(g.margen) : "—"} detalle={o.ventaUsdCaja != null ? `Compra ${usd2(o.compraUsdCaja)} · venta ${usd2(o.ventaUsdCaja)}` : "Sin precio de venta"} />
@@ -100,8 +124,8 @@ export default async function Operacion({ params }: { params: Promise<{ id: stri
                   <Link href={`/proveedores/${prov.id}`} className="text-[14.5px] font-semibold text-leaf-700 hover:underline">{prov.nombre}</Link>
                   <div className="text-[12.5px] text-ink-500">{[prov.ciudad, prov.pais, prov.idTributario].filter(Boolean).join(" · ")}</div>
                   {prov.contacto && <div className="mt-2 text-[13.5px] font-medium">{prov.contacto}{prov.cargo && <span className="font-normal text-ink-500"> · {prov.cargo}</span>}</div>}
-                  {prov.telefono && <div className="mt-1 flex items-center gap-1.5 text-[13.5px] text-ink-700"><MessageCircle size={13} aria-hidden /> <span className="select-all">{prov.telefono}</span></div>}
-                  {prov.email && <div className="mt-1 flex items-center gap-1.5 text-[13.5px] text-ink-700"><Mail size={13} aria-hidden /> <span className="select-all break-all">{prov.email}</span></div>}
+                  {prov.telefono && <div className="mt-1 flex items-center gap-1.5 text-[13.5px] text-ink-700"><MessageCircle size={13} aria-hidden /> <a href={`https://wa.me/${prov.telefono.replace(/\D/g, "")}`} target="_blank" rel="noreferrer" className="text-leaf-700 underline-offset-2 hover:underline">{prov.telefono}</a></div>}
+                  {prov.email && <div className="mt-1 flex items-center gap-1.5 text-[13.5px] text-ink-700"><Mail size={13} aria-hidden /> <a href={`mailto:${prov.email}`} className="break-all text-leaf-700 underline-offset-2 hover:underline">{prov.email}</a></div>}
                   {o.ocProveedor && <div className="mt-2 text-[12.5px] text-ink-500">Orden CFSCL al proveedor: <span className="font-mono">{o.ocProveedor}</span></div>}
                   <h3 className="mt-4 text-[13px] font-semibold">Certificados {anio}</h3>
                   <ul className="mt-1.5 space-y-1">
@@ -158,21 +182,16 @@ export default async function Operacion({ params }: { params: Promise<{ id: stri
           </Section>
 
           <Section titulo="Pagos de Ferrada" descripcion="50% contra el draft · 50% tras la llegada" sinPadding>
-            <TableWrap>
-              <thead className="border-b border-ink-100">
-                <tr><th className="th">Hito</th><th className="th text-right">Monto</th><th className="th">Fecha</th><th className="th">Estado</th></tr>
-              </thead>
-              <tbody>
-                {([["Pago 1 · contra draft", p1], ["Pago 2 · tras la llegada", p2]] as const).map(([t, pp]) => (
-                  <tr key={t} className={clsx("border-b border-ink-100 last:border-0", pp.estado === "Vencido" && "bg-brand-50/60")}>
-                    <td className="td font-medium">{t}</td>
-                    <td className="td text-right">{pp.monto != null ? usd(pp.monto) : "Sin precio"}</td>
-                    <td className="td">{pp.texto}</td>
-                    <td className="td"><Badge tono={TONO_PAGO[pp.estado]}>{pp.estado}</Badge></td>
-                  </tr>
-                ))}
-              </tbody>
-            </TableWrap>
+            <ul className="divide-y divide-ink-100">
+              {([["Pago 1 · contra draft", p1], ["Pago 2 · tras la llegada", p2]] as const).map(([t, pp]) => (
+                <li key={t} className={clsx("grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-0.5 px-4 py-3 sm:grid-cols-[1.3fr_1fr_1.4fr_auto]", pp.estado === "Vencido" && "bg-brand-50/60")}>
+                  <span className="text-[14px] font-medium">{t}</span>
+                  <span className="text-right text-[14px] font-semibold tabular-nums sm:order-none">{pp.monto != null ? usd(pp.monto) : "Sin precio"}</span>
+                  <span className="text-[13px] text-ink-500 sm:text-[14px] sm:text-ink-700">{pp.texto}</span>
+                  <span className="justify-self-end"><Badge tono={TONO_PAGO[pp.estado]}>{pp.estado}</Badge></span>
+                </li>
+              ))}
+            </ul>
           </Section>
 
           <Documentos entidad="operacion" entidadId={o.id} docs={docs} tipos={TIPOS_DOC_OPERACION} puedeEditar={edita} />
@@ -203,6 +222,7 @@ export default async function Operacion({ params }: { params: Promise<{ id: stri
         </div>
         <Bitacora entidad="operacion" entidadId={o.id} notas={notas} />
       </div>
+      {edita && o.paso !== "Cerrada" && <div className="h-20 lg:hidden" aria-hidden />}
     </>
   );
 }

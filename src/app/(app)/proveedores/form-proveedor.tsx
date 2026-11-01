@@ -6,8 +6,8 @@ const v = (x: unknown) => (x == null ? "" : String(x));
 
 export function FormProveedor({ action, p }: { action: (prev: Resultado, fd: FormData) => Promise<Resultado>; p?: Proveedor }) {
   return (
-    <FormAccion action={action} className="card p-4 sm:p-5" submit={p ? "Guardar cambios" : "Crear proveedor"}>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <FormAccion action={action} fijo submit={p ? "Guardar cambios" : "Crear proveedor"}>
+      <div className="card grid gap-4 p-4 sm:grid-cols-2 sm:p-5 xl:grid-cols-3">
         <Campo label="Nombre o razón social" className="sm:col-span-2">
           <input name="nombre" required defaultValue={v(p?.nombre)} className="input" />
         </Campo>

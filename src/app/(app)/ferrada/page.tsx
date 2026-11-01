@@ -2,7 +2,7 @@ import Link from "next/link";
 import clsx from "clsx";
 import { Check, Handshake, Lock, Plus } from "lucide-react";
 import { Bitacora } from "@/components/bitacora";
-import { Badge, PageHeader, Section, Stat, TableWrap, type Tono } from "@/components/ui";
+import { Badge, Fab, PageHeader, Section, Stat, TableWrap, type Tono } from "@/components/ui";
 import { PASOS_FERRADA, REGIONES, type Destino, type OperacionFerrada } from "@/db/schema";
 import { usuarioActual } from "@/lib/auth";
 import { getParams, listaDestinos, listaOperaciones, listaProveedores, notasDe } from "@/lib/datos";
@@ -41,8 +41,9 @@ export default async function Ferrada({ searchParams }: { searchParams: Promise<
         etapa="Ferrada · importador europeo"
         titulo="Operaciones de Ferrada"
         subtitulo="CFSCL busca la fruta en Chile, Perú y Ecuador, la compra por contenedor completo y la despacha a Europa, Medio Oriente y Asia."
-        acciones={u.rol !== "lectura" && <Link href="/ferrada/nueva" className="btn-primary"><Plus size={15} /> Nueva operación</Link>}
+        acciones={u.rol !== "lectura" && <Link href="/ferrada/nueva" className="btn-primary hidden lg:inline-flex"><Plus size={15} /> Nueva operación</Link>}
       />
+      {u.rol !== "lectura" && todas.length > 0 && <Fab href="/ferrada/nueva" label="Nueva operación"><Plus size={20} /> Nueva</Fab>}
 
       {todas.length === 0 ? (
         <div className="card flex flex-col items-center px-6 py-14 text-center">
@@ -66,7 +67,7 @@ export default async function Ferrada({ searchParams }: { searchParams: Promise<
           </div>
 
           <Section titulo={`Meta semanal: ${meta} contenedores por destino`} descripcion={`Zarpes del ${fecha(lunes)} al ${fecha(domingo)}`} className="mt-5">
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-4">
               {metaSemana.map((m) => {
                 const ok = m.contenedores >= meta;
                 return (
@@ -87,12 +88,12 @@ export default async function Ferrada({ searchParams }: { searchParams: Promise<
             </div>
           </Section>
 
-          <div className="mt-6 flex flex-wrap items-center gap-2">
-            <span className="text-[13px] text-ink-500">Origen de la fruta:</span>
+          <div className="-mx-4 mt-6 flex items-center gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
+            <span className="shrink-0 text-[13px] text-ink-500">Origen:</span>
             {ORIGENES.map((o) => {
               const c = o === "Todos" ? todas.length : todas.filter((x) => x.origenPais === o).length;
               return (
-                <Link key={o} href={o === "Todos" ? "/ferrada" : `/ferrada?origen=${encodeURIComponent(o)}`} scroll={false} className={clsx("rounded-full px-3 py-1 text-[13px]", origen === o ? "bg-ink-900 text-white" : "bg-ink-100 text-ink-600 hover:bg-ink-200")}>
+                <Link key={o} href={o === "Todos" ? "/ferrada" : `/ferrada?origen=${encodeURIComponent(o)}`} scroll={false} className={clsx("shrink-0 rounded-full px-3.5 py-2 text-[14px] lg:px-3 lg:py-1 lg:text-[13px]", origen === o ? "bg-ink-900 text-white" : "bg-ink-100 text-ink-600 hover:bg-ink-200")}>
                   {o === "Todos" ? "Todas" : o} <span className="tabular-nums opacity-70">{c}</span>
                 </Link>
               );
@@ -104,7 +105,7 @@ export default async function Ferrada({ searchParams }: { searchParams: Promise<
       <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
         <div className="min-w-0">
           {todas.length > 0 && (
-            <div className="grid gap-4 lg:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-3">
               {REGIONES.map((reg) => {
                 const lista = activas.filter((o) => dest.get(o.destinoId)?.region === reg);
                 return (
@@ -125,6 +126,20 @@ export default async function Ferrada({ searchParams }: { searchParams: Promise<
 
           {cerradas.length > 0 && (
             <Section titulo={`Cerradas (${cerradas.length})`} className="mt-5" sinPadding>
+              <ul className="divide-y divide-ink-100 md:hidden">
+                {cerradas.map((o) => (
+                  <li key={o.id}>
+                    <Link href={`/ferrada/${o.id}`} className="flex items-center gap-3 px-4 py-3 active:bg-ink-50">
+                      <div className="min-w-0 flex-1">
+                        <div className="text-[14.5px] font-medium">{o.producto} {o.variedad}</div>
+                        <div className="text-[12.5px] text-ink-500"><span className="font-mono">{o.codigo}</span> · {dest.get(o.destinoId)?.puerto} · {o.contenedores} cont.</div>
+                      </div>
+                      <div className="text-right text-[14px] font-semibold text-leaf-700">{usd(ganancia(o).total)}</div>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+              <div className="hidden md:block">
               <TableWrap>
                 <thead className="border-b border-ink-100">
                   <tr><th className="th">Operación</th><th className="th">Fruta</th><th className="th">Destino</th><th className="th text-right">Cont.</th><th className="th text-right">Ganancia CFSCL</th></tr>
@@ -141,6 +156,7 @@ export default async function Ferrada({ searchParams }: { searchParams: Promise<
                   ))}
                 </tbody>
               </TableWrap>
+              </div>
             </Section>
           )}
         </div>
@@ -155,7 +171,7 @@ function Tarjeta({ o, d, proveedor, dias }: { o: OperacionFerrada; d: Destino; p
   const k = PASOS_FERRADA.indexOf(o.paso);
   const bloqueado = setOficialBloqueado(o);
   return (
-    <Link href={`/ferrada/${o.id}`} className="card block p-3.5 transition hover:border-leaf-500">
+    <Link href={`/ferrada/${o.id}`} className="card block p-4 transition hover:border-leaf-500 active:scale-[.99] md:p-3.5">
       <div className="flex items-center gap-2">
         <span className="font-mono text-[12px] text-ink-500">{o.codigo}</span>
         <Badge tono={o.origenPais === "Perú" ? "ambar" : o.origenPais === "Ecuador" ? "azul" : "verde"} className="ml-auto">{o.origenPais}</Badge>

@@ -11,11 +11,11 @@ const PRODUCTOS = ["Manzana", "Pera", "Uva", "Cereza", "Ciruela", "Durazno", "Ar
 
 function Bloque({ titulo, children, descripcion }: { titulo: string; descripcion?: string; children: React.ReactNode }) {
   return (
-    <fieldset className="card p-4 sm:p-5">
+    <fieldset className="card min-w-0 p-4 sm:p-5">
       <legend className="sr-only">{titulo}</legend>
       <h2 className="font-display text-[15.5px] font-bold text-ink-900">{titulo}</h2>
       {descripcion && <p className="mt-0.5 text-[12.5px] text-ink-500">{descripcion}</p>}
-      <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{children}</div>
+      <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{children}</div>
     </fieldset>
   );
 }
@@ -39,7 +39,7 @@ export function FormOperacion({
 }) {
   const activos = destinos.filter((d) => d.activo || d.id === o?.destinoId);
   return (
-    <FormAccion action={action} className="flex flex-col gap-5" submit={o ? "Guardar cambios" : "Crear operación"}>
+    <FormAccion action={action} fijo className="flex flex-col gap-4 sm:gap-5" submit={o ? "Guardar cambios" : "Crear operación"}>
       <Bloque titulo="Orden" descripcion="Lo que pide Ferrada en su orden de compra">
         <Campo label="Código" ayuda={o ? undefined : "Se asigna solo si lo dejas vacío"}>
           <input name="codigo" defaultValue={o?.codigo} placeholder={codigoSugerido} required={!!o} className="input font-mono" />
@@ -98,7 +98,7 @@ export function FormOperacion({
         <Campo label="N° orden CFSCL al proveedor">
           <input name="ocProveedor" defaultValue={v(o?.ocProveedor)} className="input" />
         </Campo>
-        <div className="hidden lg:block" />
+        <div className="hidden xl:block" />
         <Campo label="Compra (US$/caja)" ayuda="Lo que paga CFSCL al proveedor">
           <input name="compraUsdCaja" inputMode="decimal" defaultValue={v(o?.compraUsdCaja)} className="input" />
         </Campo>
@@ -128,7 +128,7 @@ export function FormOperacion({
         <Campo label="Pago 1 recibido"><input name="pago1Pagado" type="date" defaultValue={v(o?.pago1Pagado)} className="input" /></Campo>
         <Campo label="Set oficial enviado"><input name="setOficialEnviado" type="date" defaultValue={v(o?.setOficialEnviado)} className="input" /></Campo>
         <Campo label="Pago 2 recibido"><input name="pago2Pagado" type="date" defaultValue={v(o?.pago2Pagado)} className="input" /></Campo>
-        <Campo label="Notas" className="sm:col-span-2 lg:col-span-3">
+        <Campo label="Notas" className="sm:col-span-2 xl:col-span-3">
           <textarea name="notas" rows={3} defaultValue={v(o?.notas)} className="input" />
         </Campo>
       </Bloque>

@@ -15,6 +15,13 @@ body {
 body {
   font-family: "IBM Plex Sans", system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+
+/* Alto de la barra inferior en móvil y tablet (incluye el borde seguro del iPhone) */
+:root {
+  --nav-h: calc(4rem + env(safe-area-inset-bottom));
 }
 
 .tabular {
@@ -34,8 +41,9 @@ body {
   .td {
     @apply whitespace-nowrap px-3 py-2.5 text-sm tabular-nums;
   }
+  /* En pantallas táctiles los botones miden al menos 44 px de alto */
   .btn {
-    @apply inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-leaf-500 focus-visible:ring-offset-1;
+    @apply inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg px-3.5 py-2 text-[15px] font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-leaf-500 focus-visible:ring-offset-1 active:scale-[.98] lg:min-h-0 lg:px-3 lg:py-1.5 lg:text-sm;
   }
   .btn-primary {
     @apply btn bg-leaf-500 text-white hover:bg-leaf-600;
@@ -43,8 +51,12 @@ body {
   .btn-ghost {
     @apply btn border border-ink-200 bg-white text-ink-700 hover:bg-ink-50;
   }
+  /* 16 px en móvil: evita que iOS haga zoom al tocar el campo */
   .input {
-    @apply w-full rounded-lg border border-ink-200 bg-white px-3 py-2 text-[14px] text-ink-900 placeholder:text-ink-400 focus:border-leaf-500 focus:outline-none focus:ring-2 focus:ring-leaf-500/20;
+    @apply min-h-[44px] w-full rounded-lg border border-ink-200 bg-white px-3 py-2 text-base text-ink-900 placeholder:text-ink-400 focus:border-leaf-500 focus:outline-none focus:ring-2 focus:ring-leaf-500/20 disabled:bg-ink-50 disabled:text-ink-500 lg:min-h-0 lg:text-[14px];
+  }
+  .pb-nav {
+    padding-bottom: calc(var(--nav-h) + 1.5rem);
   }
   .btn-danger {
     @apply btn border border-brand-100 bg-brand-50 text-brand-700 hover:bg-brand-100;

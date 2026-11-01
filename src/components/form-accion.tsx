@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import { useFormStatus } from "react-dom";
 import clsx from "clsx";
-import { Loader2 } from "lucide-react";
+import { Camera, Check, Loader2 } from "lucide-react";
 import type { Resultado } from "@/lib/form";
 
 type Accion = (prev: Resultado, fd: FormData) => Promise<Resultado>;
@@ -27,6 +27,7 @@ export function FormAccion({
   className,
   resetear = false,
   pie,
+  fijo = false,
 }: {
   action: Accion;
   children: React.ReactNode;
@@ -35,6 +36,8 @@ export function FormAccion({
   className?: string;
   resetear?: boolean;
   pie?: React.ReactNode;
+  /** Formularios largos: el botón queda fijo abajo en teléfono y tablet */
+  fijo?: boolean;
 }) {
   const [estado, accion] = useActionState(action, undefined);
   const ref = useRef<HTMLFormElement>(null);
@@ -44,13 +47,19 @@ export function FormAccion({
   return (
     <form ref={ref} action={accion} className={className}>
       {children}
-      {estado?.error && (
-        <p role="alert" className="mt-3 rounded-lg bg-brand-50 px-3 py-2 text-[13.5px] text-brand-700">
-          {estado.error}
-        </p>
-      )}
-      {estado?.ok && estado.mensaje && <p className="mt-3 text-[13px] text-leaf-700">{estado.mensaje}</p>}
-      <div className="mt-4 flex flex-wrap items-center gap-2">
+      <div
+        className={clsx(
+          "mt-4 flex flex-wrap items-center gap-2",
+          fijo && "sticky z-10 -mx-4 border-t border-ink-200 bg-white/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6 lg:static lg:mx-0 lg:border-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none [&>button]:flex-1 lg:[&>button]:flex-none",
+        )}
+        style={fijo ? { bottom: "var(--nav-h)" } : undefined}
+      >
+        {estado?.error && (
+          <p role="alert" className="basis-full rounded-lg bg-brand-50 px-3 py-2 text-[13.5px] text-brand-700">
+            {estado.error}
+          </p>
+        )}
+        {estado?.ok && estado.mensaje && <p className="basis-full text-[13px] text-leaf-700">{estado.mensaje}</p>}
         <Enviar className={submitClassName}>{submit}</Enviar>
         {pie}
       </div>
@@ -120,6 +129,18 @@ export function Campo({
       <span className="text-[12.5px] font-medium text-ink-700">{label}</span>
       {children}
       {ayuda && <span className="text-[12px] text-ink-500">{ayuda}</span>}
+    </label>
+  );
+}
+
+/** Botón de cámara para teléfono y tablet: abre la cámara trasera y avisa cuando la foto quedó lista. */
+export function TomarFoto({ name = "archivo" }: { name?: string }) {
+  const [n, setN] = useState(0);
+  return (
+    <label className={clsx("btn-ghost cursor-pointer lg:hidden", n > 0 && "border-leaf-500 text-leaf-700")}>
+      {n > 0 ? <Check size={16} aria-hidden /> : <Camera size={16} aria-hidden />}
+      {n > 0 ? "Foto lista" : "Tomar foto"}
+      <input type="file" name={name} accept="image/*" capture="environment" className="sr-only" onChange={(e) => setN(e.target.files?.length ?? 0)} />
     </label>
   );
 }

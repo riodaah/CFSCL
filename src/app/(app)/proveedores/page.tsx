@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Plus, Truck } from "lucide-react";
-import { Badge, PageHeader, Section, TableWrap } from "@/components/ui";
+import { Badge, Fab, PageHeader, Section, TableWrap } from "@/components/ui";
 import { usuarioActual } from "@/lib/auth";
 import { listaOperaciones, listaProveedores, todosLosCertificados } from "@/lib/datos";
 import { hoy, TIPOS_CERTIFICADO } from "@/lib/ferrada";
@@ -14,8 +14,9 @@ export default async function Proveedores() {
         etapa="Ferrada"
         titulo="Proveedores"
         subtitulo="Exportadoras y productores a quienes CFSCL les compra fruta. Los certificados se piden una vez al año, antes del primer contenedor."
-        acciones={u.rol !== "lectura" && <Link href="/proveedores/nuevo" className="btn-primary"><Plus size={15} /> Nuevo proveedor</Link>}
+        acciones={u.rol !== "lectura" && <Link href="/proveedores/nuevo" className="btn-primary hidden lg:inline-flex"><Plus size={15} /> Nuevo proveedor</Link>}
       />
+      {u.rol !== "lectura" && provs.length > 0 && <Fab href="/proveedores/nuevo" label="Nuevo proveedor"><Plus size={20} /> Nuevo</Fab>}
       {provs.length === 0 ? (
         <div className="card flex flex-col items-center px-6 py-14 text-center">
           <Truck size={34} className="text-leaf-500" aria-hidden />
@@ -25,6 +26,24 @@ export default async function Proveedores() {
         </div>
       ) : (
         <Section titulo={`${provs.length} proveedor${provs.length > 1 ? "es" : ""}`} sinPadding>
+          <ul className="divide-y divide-ink-100 md:hidden">
+            {provs.map((p) => {
+              const ok = certs.filter((c) => c.proveedorId === p.id && c.anio === anio && c.recibido).length;
+              const total = TIPOS_CERTIFICADO.length;
+              return (
+                <li key={p.id}>
+                  <Link href={`/proveedores/${p.id}`} className="flex items-center gap-3 px-4 py-3 active:bg-ink-50">
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-[15px] font-medium text-ink-900">{p.nombre}{!p.activo && <span className="ml-2 text-[12px] text-ink-400">Inactivo</span>}</div>
+                      <div className="truncate text-[13px] text-ink-500">{p.pais}{p.contacto ? ` · ${p.contacto}` : ""} · {ops.filter((o) => o.proveedorId === p.id).length} oper.</div>
+                    </div>
+                    <Badge tono={ok >= total ? "verde" : ok === 0 ? "rojo" : "ambar"}>Cert. {ok}/{total}</Badge>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+          <div className="hidden md:block">
           <TableWrap>
             <thead className="border-b border-ink-100">
               <tr>
@@ -54,6 +73,7 @@ export default async function Proveedores() {
               })}
             </tbody>
           </TableWrap>
+          </div>
         </Section>
       )}
     </>

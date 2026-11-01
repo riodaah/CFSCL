@@ -1,10 +1,19 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "CFS · Sistema de gestión",
   description: "Sistema de gestión de Central Frutícola Sur",
-  icons: { icon: "/logo-cfs.png" },
+  icons: { icon: "/logo-cfs.png", apple: "/apple-touch-icon.png" },
+  appleWebApp: { capable: true, title: "CFS", statusBarStyle: "black-translucent" },
+  formatDetection: { telephone: false },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover", // usa toda la pantalla en iPhone; los bordes se respetan con safe-area
+  themeColor: "#06301a",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

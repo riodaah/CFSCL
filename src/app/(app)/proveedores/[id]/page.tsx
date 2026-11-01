@@ -4,7 +4,7 @@ import { ArrowLeft, CheckCircle2, CircleDashed, Mail, MessageCircle, Pencil, Upl
 import { marcarCertificado, subirDocumento } from "@/app/acciones";
 import { Bitacora } from "@/components/bitacora";
 import { Documentos } from "@/components/documentos";
-import { BotonAccion, Campo, FormAccion } from "@/components/form-accion";
+import { BotonAccion, Campo, FormAccion, TomarFoto } from "@/components/form-accion";
 import { Badge, PageHeader, Section, TableWrap } from "@/components/ui";
 import { usuarioActual } from "@/lib/auth";
 import { certificadosDe, documentosDe, getProveedor, listaOperaciones, notasDe } from "@/lib/datos";
@@ -39,8 +39,8 @@ export default async function ProveedorDetalle({ params }: { params: Promise<{ i
               {p.contacto || p.telefono || p.email ? (
                 <>
                   {p.contacto && <div className="text-[14px] font-medium">{p.contacto}{p.cargo && <span className="font-normal text-ink-500"> · {p.cargo}</span>}</div>}
-                  {p.telefono && <div className="mt-1.5 flex items-center gap-1.5 text-[13.5px]"><MessageCircle size={13} aria-hidden /> <span className="select-all">{p.telefono}</span></div>}
-                  {p.email && <div className="mt-1 flex items-center gap-1.5 text-[13.5px]"><Mail size={13} aria-hidden /> <span className="select-all break-all">{p.email}</span></div>}
+                  {p.telefono && <div className="mt-1.5 flex items-center gap-1.5 text-[13.5px]"><MessageCircle size={13} aria-hidden /> <a href={`https://wa.me/${p.telefono.replace(/\D/g, "")}`} target="_blank" rel="noreferrer" className="text-leaf-700 underline-offset-2 hover:underline">{p.telefono}</a></div>}
+                  {p.email && <div className="mt-1 flex items-center gap-1.5 text-[13.5px]"><Mail size={13} aria-hidden /> <a href={`mailto:${p.email}`} className="break-all text-leaf-700 underline-offset-2 hover:underline">{p.email}</a></div>}
                 </>
               ) : (
                 <p className="text-[13.5px] text-amber-800">Faltan los datos de contacto.</p>
@@ -52,7 +52,7 @@ export default async function ProveedorDetalle({ params }: { params: Promise<{ i
                 {TIPOS_CERTIFICADO.map((t) => {
                   const c = certs.find((x) => x.tipo === t && x.anio === anio);
                   return (
-                    <li key={t} className="flex flex-wrap items-center gap-2 text-[13.5px]">
+                    <li key={t} className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[14px] lg:text-[13.5px]">
                       {c?.recibido ? <CheckCircle2 size={16} className="text-leaf-500" /> : <CircleDashed size={16} className="text-brand-500" />}
                       <span className="flex-1">{t}</span>
                       {c?.recibido ? (
@@ -61,7 +61,7 @@ export default async function ProveedorDetalle({ params }: { params: Promise<{ i
                         <span className="text-[12px] font-medium text-brand-600">Falta</span>
                       )}
                       {edita && (
-                        <BotonAccion accion={marcarCertificado.bind(null, p.id, t, anio, !c?.recibido)} className="btn-ghost px-2 py-0.5 text-[12px]">
+                        <BotonAccion accion={marcarCertificado.bind(null, p.id, t, anio, !c?.recibido)} className="btn-ghost min-h-[36px] px-2.5 py-1 text-[13px] lg:min-h-0 lg:px-2 lg:py-0.5 lg:text-[12px]">
                           {c?.recibido ? "Desmarcar" : "Marcar recibido"}
                         </BotonAccion>
                       )}
@@ -70,7 +70,7 @@ export default async function ProveedorDetalle({ params }: { params: Promise<{ i
                 })}
               </ul>
               {edita && (
-                <FormAccion action={subirCert} resetear className="mt-4 border-t border-ink-100 pt-3" submit={<><Upload size={14} /> Subir certificado</>} submitClassName="btn-ghost">
+                <FormAccion action={subirCert} resetear className="mt-4 border-t border-ink-100 pt-3" submit={<><Upload size={14} /> Subir certificado</>} submitClassName="btn-ghost" pie={<TomarFoto />}>
                   <input type="hidden" name="certificado" value="1" />
                   <input type="hidden" name="anio" value={anio} />
                   <div className="grid gap-3 sm:grid-cols-2">
@@ -81,7 +81,7 @@ export default async function ProveedorDetalle({ params }: { params: Promise<{ i
                       </select>
                     </Campo>
                     <Campo label="Archivo">
-                      <input type="file" name="archivo" required className="input py-1.5" />
+                      <input type="file" name="archivo" className="input py-1.5" />
                     </Campo>
                   </div>
                 </FormAccion>
@@ -91,6 +91,21 @@ export default async function ProveedorDetalle({ params }: { params: Promise<{ i
 
           <Section titulo={`Operaciones de Ferrada (${misOps.length})`} sinPadding>
             {misOps.length ? (
+              <>
+              <ul className="divide-y divide-ink-100 md:hidden">
+                {misOps.map((o) => (
+                  <li key={o.id}>
+                    <Link href={`/ferrada/${o.id}`} className="flex items-center gap-3 px-4 py-3 active:bg-ink-50">
+                      <div className="min-w-0 flex-1">
+                        <div className="text-[14.5px] font-medium">{o.producto} {o.variedad}</div>
+                        <div className="text-[12.5px] text-ink-500"><span className="font-mono">{o.codigo}</span> · {o.contenedores} cont. · {n(o.cajas)} cajas</div>
+                      </div>
+                      <Badge>{o.paso}</Badge>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+              <div className="hidden md:block">
               <TableWrap>
                 <thead className="border-b border-ink-100">
                   <tr><th className="th">Operación</th><th className="th">Fruta</th><th className="th text-right">Cont.</th><th className="th text-right">Cajas</th><th className="th">Paso</th></tr>
@@ -107,6 +122,8 @@ export default async function ProveedorDetalle({ params }: { params: Promise<{ i
                   ))}
                 </tbody>
               </TableWrap>
+              </div>
+              </>
             ) : (
               <p className="px-4 py-5 text-[13px] text-ink-500">Sin operaciones todavía.</p>
             )}

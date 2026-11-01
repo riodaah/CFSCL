@@ -15,13 +15,13 @@ export function PageHeader({
   acciones?: React.ReactNode;
 }) {
   return (
-    <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+    <div className="mb-5 flex flex-wrap items-end justify-between gap-3 sm:mb-6 sm:gap-4">
       <div className="min-w-0">
         {etapa && <div className="label mb-1 text-leaf-600">{etapa}</div>}
-        <h1 className="font-display text-[26px] font-bold leading-tight tracking-tight text-ink-900 [text-wrap:balance]">{titulo}</h1>
-        {subtitulo && <p className="mt-1 max-w-3xl text-[14.5px] text-ink-500">{subtitulo}</p>}
+        <h1 className="font-display text-[22px] font-bold leading-tight tracking-tight text-ink-900 [text-wrap:balance] sm:text-[26px]">{titulo}</h1>
+        {subtitulo && <p className="mt-1 max-w-3xl text-[14px] text-ink-500 sm:text-[14.5px]">{subtitulo}</p>}
       </div>
-      {acciones && <div className="flex flex-wrap gap-2">{acciones}</div>}
+      {acciones && <div className="flex w-full flex-wrap gap-2 sm:w-auto">{acciones}</div>}
     </div>
   );
 }
@@ -40,9 +40,9 @@ export function Stat({
   tono?: "neutro" | "alerta" | "ok";
 }) {
   return (
-    <div className="card p-4">
+    <div className="card min-w-0 p-3.5 sm:p-4">
       <div className="flex items-center justify-between">
-        <span className="label">{label}</span>
+        <span className="label truncate">{label}</span>
         {Icon && (
           <Icon
             size={16}
@@ -51,8 +51,8 @@ export function Stat({
           />
         )}
       </div>
-      <div className="mt-2 font-display text-[26px] font-bold leading-none tabular-nums text-ink-900">{valor}</div>
-      {detalle && <div className="mt-1.5 text-[13px] text-ink-500">{detalle}</div>}
+      <div className="mt-2 font-display text-[21px] font-bold leading-none tabular-nums text-ink-900 sm:text-[26px]">{valor}</div>
+      {detalle && <div className="mt-1.5 text-[12.5px] leading-snug text-ink-500 sm:text-[13px]">{detalle}</div>}
     </div>
   );
 }
@@ -191,3 +191,17 @@ export const COLOR_CALIDAD: Record<string, string> = {
   Comercial: "#b9837a",
   Industrial: "#c80f0a",
 };
+
+/** Botón flotante para la acción principal en teléfono y tablet (sobre la barra inferior). */
+export function Fab({ href, children, label }: { href: string; children: React.ReactNode; label: string }) {
+  return (
+    <Link
+      href={href}
+      aria-label={label}
+      className="fixed right-4 z-20 flex h-14 items-center gap-2 rounded-full bg-leaf-500 px-5 text-[15px] font-semibold text-white shadow-lg shadow-leaf-900/25 active:scale-95 lg:hidden"
+      style={{ bottom: "calc(var(--nav-h) + 1rem)" }}
+    >
+      {children}
+    </Link>
+  );
+}
