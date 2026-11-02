@@ -59,6 +59,17 @@ const CERTIFICADOS = [
   { prov: "zeit", tipo: "BRCGS", numero: "BRC 01031/01 · grado AA", emisor: "LSQA S.A.", desde: "2026-09-21", hasta: "2027-09-30", archivo: "BRCGS_AGRICOLA_ZEIT" },
   { prov: "jl", tipo: "GlobalG.A.P.", numero: "C2026-04160", emisor: "Perry Johnson Registrars", desde: "2026-06-16", hasta: "2027-02-27", archivo: "Final_IFA_Cert" },
   { prov: "jl", tipo: "SPRING", numero: "GGN 4052852321310", emisor: "Perry Johnson Registrars", desde: "2026-06-16", hasta: "2027-02-27", archivo: "Final_SPRING_Cert" },
+  // Segunda tanda de documentos
+  { prov: "jl", tipo: "GRASP", numero: "GGN 4052852321310", emisor: "Perry Johnson Registrars", desde: "2026-06-16", hasta: "2027-02-27", archivo: "GRASP_Final_Cert" },
+  { prov: "zeit", tipo: "Registro FDA", numero: "12939215310 · DUNS 664791914", emisor: "FDA (agente FastForward Trading)", desde: "2025-11-17", hasta: "2026-12-31", archivo: "FDA_ACTUALIZADO" },
+  { prov: "zeit", tipo: "Autorización sanitaria (SENASA)", numero: "000024-MINAGRI-SENASA-LAMBAYEQUE", emisor: "SENASA Lambayeque", desde: "2014-03-07", hasta: null, archivo: "AUTORIZACI" },
+  { prov: "zeit", tipo: "SMETA (Sedex)", numero: "ZAA600204270 · auditoría 16-17 may 2026", emisor: "LSQA", desde: "2026-05-17", hasta: null, archivo: "SMETA_ZAA600204270" },
+];
+
+/** Archivos que se suben a la ficha del proveedor sin datos de vigencia (falta revisarlos). Si no están en la carpeta, se omiten. */
+const DOCS_POR_REVISAR = [
+  { prov: "zeit", tipo: "Certificado de plantas de tratamiento y/o empaque (por revisar)", archivo: "PLANTAS_DE_TRATAMIENTO" },
+  { prov: "jl", tipo: "Certificado FSMA (por revisar)", archivo: "Final_Cert_FSMA" },
 ];
 
 const DESTINOS = [
@@ -149,6 +160,7 @@ const OPERACIONES = [
       ["POGrapes_35V01876", "Purchase order de Ferrada"],
       ["35V01876_UVA_1", "Pedido almacén de Ferrada"],
       ["ZIMULMA828608", "Confirmación de booking"],
+      ["Scan2026-10-28", "Carta de autorización naviera"],
     ],
   },
   {
@@ -162,6 +174,7 @@ const OPERACIONES = [
       ["PO_Grapes_35V01877", "Purchase order de Ferrada"],
       ["35V01877_UVA_2", "Pedido almacén de Ferrada"],
       ["ZIMULMA828609", "Confirmación de booking"],
+      ["Scan2026-10-28", "Carta de autorización naviera"],
     ],
   },
 ];
@@ -188,6 +201,7 @@ async function main() {
     if (!f) throw new Error(`No encontré el archivo que contiene «${frag}» en ${carpeta}`);
     return f;
   };
+  const existe = (frag: string) => archivos.some((a) => norm(a).includes(norm(frag)));
 
   // Sube el archivo una sola vez por ficha (mismo contenido = mismo sha256)
   async function documento(entidad: s.Entidad, entidadId: number, tipo: string, frag: string) {
@@ -250,6 +264,11 @@ async function main() {
     console.log(`  ${ya ? "=" : "+"} ${c.tipo} ${c.numero}`);
   }
 
+  for (const d of DOCS_POR_REVISAR) {
+    if (existe(d.archivo)) await documento("proveedor", ids[d.prov], d.tipo, d.archivo);
+    else console.log(`  – No está «${d.archivo}»: se omite`);
+  }
+
   console.log("▸ Destinos");
   const dest: Record<string, number> = {};
   for (const d of DESTINOS) {
@@ -279,7 +298,7 @@ async function main() {
   if (!nota) await db.insert(s.notas).values({ entidad: "ferrada", entidadId: null, autor: AUTOR, texto: NOTA_FERRADA });
 
   await sql.end();
-  console.log("\n✓ Listo: 3 proveedores, 7 certificados, 4 operaciones y sus documentos.");
+  console.log("\n✓ Listo: 3 proveedores, 11 certificados, 4 operaciones y sus documentos.");
 }
 
 main().catch((e) => {

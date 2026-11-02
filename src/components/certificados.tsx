@@ -15,7 +15,8 @@ const ICONO: Record<EstadoCert, React.ReactNode> = {
 
 function Vigencia({ estado, cert, dias }: { estado: EstadoCert; cert?: Certificado; dias?: number }) {
   if (estado === "Falta") return <span className="text-[12.5px] font-medium text-brand-600">Falta</span>;
-  const hasta = cert?.vigenteHasta ? fechaLarga(cert.vigenteHasta) : "sin fecha";
+  if (!cert?.vigenteHasta) return <span className="text-[12.5px] text-ink-500">Sin vencimiento</span>;
+  const hasta = fechaLarga(cert.vigenteHasta);
   const texto = estado === "Vencido" ? `Venció el ${hasta}` : estado === "Por vencer" ? `Vence en ${dias} días` : `Hasta ${hasta}`;
   return <span className={clsx("text-[12.5px]", estado === "Vigente" ? "text-ink-500" : estado === "Por vencer" ? "font-medium text-amber-700" : "font-medium text-brand-600")}>{texto}</span>;
 }

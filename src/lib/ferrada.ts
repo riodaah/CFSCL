@@ -78,6 +78,7 @@ export const TIPOS_DOC_OPERACION = [
   "Pedido almacén de Ferrada",
   "Orden CFSCL al proveedor",
   "Confirmación de booking",
+  "Carta de autorización naviera",
   "Guía de remisión",
   "Draft de BL",
   "BL",
@@ -99,7 +100,20 @@ export const CERTIFICADOS_REQUERIDOS: Record<TipoProveedor, readonly string[]> =
   "Planta de embalaje": ["HACCP", "BRCGS"],
 };
 
-export const TIPOS_CERTIFICADO = ["GlobalG.A.P.", "GRASP", "Lugar de producción (SENASA/SAG)", "HACCP", "BRCGS", "SPRING", "Otro"] as const;
+export const TIPOS_CERTIFICADO = [
+  "GlobalG.A.P.",
+  "GRASP",
+  "Lugar de producción (SENASA/SAG)",
+  "HACCP",
+  "BRCGS",
+  "SMETA (Sedex)",
+  "Autorización sanitaria (SENASA)",
+  "Planta de tratamiento y/o empaque (SENASA)",
+  "Registro FDA",
+  "FSMA",
+  "SPRING",
+  "Otro",
+] as const;
 
 export const TIPOS_DOC_PROVEEDOR = ["Ficha del proveedor", "Contrato", "Otro"] as const;
 
