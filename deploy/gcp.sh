@@ -108,6 +108,7 @@ deploy() {
   for s in GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET DATABASE_URL; do
     gcloud secrets describe "$s" >/dev/null 2>&1 || { echo "Falta el secreto $s. Corre: bash deploy/gcp.sh setup"; exit 1; }
   done
+  migrar
   local tag
   tag="$(git rev-parse --short HEAD 2>/dev/null || date +%Y%m%d%H%M)"
   echo "▸ Construyendo imagen ${IMAGE}:${tag} con Cloud Build"
@@ -159,11 +160,33 @@ google() {
   echo "✓ Login con Google actualizado"
 }
 
+# Aplica en Neon las migraciones pendientes (drizzle/). Se corre antes de cada deploy.
+migrar() {
+  [[ -d node_modules ]] || npm install --no-audit --no-fund
+  echo "▸ Migraciones de base de datos"
+  DATABASE_URL="$(gcloud secrets versions access latest --secret=DATABASE_URL)" npx drizzle-kit migrate
+}
+
+# Carga el primer trato de Ferrada en producción: datos + los 20 PDF al bucket.
+# Requiere una vez: gcloud auth application-default login
+cargar() {
+  local carpeta="${1:-}"
+  [[ -d "$carpeta" ]] || { echo "Uso: bash deploy/gcp.sh cargar \"<carpeta con los PDF>\""; exit 1; }
+  gcloud auth application-default print-access-token >/dev/null 2>&1 ||
+    { echo "Primero corre: gcloud auth application-default login"; exit 1; }
+  migrar
+  DATABASE_URL="$(gcloud secrets versions access latest --secret=DATABASE_URL)" \
+  GCS_BUCKET="$BUCKET" GOOGLE_CLOUD_PROJECT="$PROJECT_ID" \
+    npx tsx scripts/cargar-trato-ferrada.ts "$carpeta"
+}
+
 case "${1:-}" in
   setup) setup ;;
   permisos) permisos_build ;;
   deploy) deploy ;;
   dominio) dominio ;;
+  migrar) migrar ;;
+  cargar) cargar "${2:-}" ;;
   google) google ;;
-  *) echo "Uso: bash deploy/gcp.sh setup | permisos | deploy | dominio | google"; exit 1 ;;
+  *) echo "Uso: bash deploy/gcp.sh setup | permisos | migrar | deploy | dominio | google | cargar <carpeta>"; exit 1 ;;
 esac

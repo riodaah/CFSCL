@@ -18,6 +18,7 @@ import {
   REGIONES,
   ROLES,
   TIPOS_NOTA,
+  TIPOS_PROVEEDOR,
   usuarios,
   type Entidad,
 } from "@/db/schema";
@@ -38,6 +39,8 @@ function camposOperacion(fd: FormData) {
     fechaOrden: fechaISO(fd, "fechaOrden") ?? hoy(),
     origenPais: uno(fd, "origenPais", ORIGENES, "el origen"),
     proveedorId: proveedor ? Number(proveedor) : null,
+    plantaId: txt(fd, "plantaId") ? Number(txt(fd, "plantaId")) : null,
+    consignatario: txt(fd, "consignatario"),
     destinoId,
     producto: req(fd, "producto", "el producto"),
     variedad: txt(fd, "variedad"),
@@ -47,6 +50,8 @@ function camposOperacion(fd: FormData) {
     cajas: int(fd, "cajas", "Cajas", 0),
     compraUsdCaja: num(fd, "compraUsdCaja"),
     ventaUsdCaja: num(fd, "ventaUsdCaja"),
+    anticipoUsdCaja: num(fd, "anticipoUsdCaja"),
+    precioMinimoUsdCaja: num(fd, "precioMinimoUsdCaja"),
     comisionUsdCaja: num(fd, "comisionUsdCaja") ?? 0.5,
     rebateUsdContenedor: num(fd, "rebateUsdContenedor") ?? 0,
     paso: uno(fd, "paso", PASOS_FERRADA, "el paso"),
@@ -54,6 +59,7 @@ function camposOperacion(fd: FormData) {
     ocProveedor: txt(fd, "ocProveedor"),
     naviera: txt(fd, "naviera"),
     booking: txt(fd, "booking"),
+    bl: txt(fd, "bl"),
     barco: txt(fd, "barco"),
     numerosContenedor: txt(fd, "numerosContenedor"),
     etd,
@@ -195,21 +201,9 @@ export async function subirDocumento(entidad: Entidad, entidadId: number, _: Res
     for (const f of archivos) if (f.size > MAX_BYTES) throw new ErrorForm(`${f.name} pesa más de 25 MB.`);
     for (const f of archivos) {
       const g = await guardarArchivo(`${entidad}/${entidadId}`, f);
-      const [doc] = await db
+      await db
         .insert(documentos)
-        .values({ entidad, entidadId, tipo, nombreArchivo: f.name, mime: g.mime, tamanoBytes: g.tamano, storageKey: g.key, sha256: g.sha256, subidoPor: nombreDe(u) })
-        .returning();
-      // Un certificado subido desde la ficha del proveedor queda marcado como recibido en el año en curso
-      if (entidad === "proveedor" && txt(fd, "certificado") === "1") {
-        const anio = Number(txt(fd, "anio") ?? hoy().slice(0, 4));
-        await db
-          .insert(certificadosProveedor)
-          .values({ proveedorId: entidadId, tipo, anio, recibido: hoy(), documentoId: doc.id })
-          .onConflictDoUpdate({
-            target: [certificadosProveedor.proveedorId, certificadosProveedor.tipo, certificadosProveedor.anio],
-            set: { recibido: hoy(), documentoId: doc.id },
-          });
-      }
+        .values({ entidad, entidadId, tipo, nombreArchivo: f.name, mime: g.mime, tamanoBytes: g.tamano, storageKey: g.key, sha256: g.sha256, subidoPor: nombreDe(u) });
     }
     await db.insert(notas).values({
       entidad,
@@ -260,6 +254,7 @@ export async function agregarNota(entidad: Entidad, entidadId: number | null, _:
 function camposProveedor(fd: FormData) {
   return {
     nombre: req(fd, "nombre", "el nombre"),
+    tipo: uno(fd, "tipo", TIPOS_PROVEEDOR, "el tipo"),
     pais: uno(fd, "pais", ORIGENES, "el país"),
     ciudad: txt(fd, "ciudad"),
     idTributario: txt(fd, "idTributario"),
@@ -295,17 +290,60 @@ export async function actualizarProveedor(id: number, _: Resultado, fd: FormData
   redirect(`/proveedores/${id}`);
 }
 
-/** Marca un certificado como recibido (o lo desmarca) sin subir archivo */
-export async function marcarCertificado(proveedorId: number, tipo: string, anio: number, recibido: boolean): Promise<Resultado> {
+/** Registra un certificado con su vigencia y, si viene, el archivo. */
+export async function registrarCertificado(proveedorId: number, _: Resultado, fd: FormData): Promise<Resultado> {
   try {
-    await editor();
-    await db
-      .insert(certificadosProveedor)
-      .values({ proveedorId, tipo, anio, recibido: recibido ? hoy() : null })
-      .onConflictDoUpdate({
-        target: [certificadosProveedor.proveedorId, certificadosProveedor.tipo, certificadosProveedor.anio],
-        set: { recibido: recibido ? hoy() : null },
-      });
+    const u = await editor();
+    const tipo = req(fd, "tipo", "el tipo de certificado");
+    const desde = fechaISO(fd, "vigenteDesde");
+    const hasta = fechaISO(fd, "vigenteHasta");
+    if (!hasta) throw new ErrorForm("Falta la fecha de vencimiento: el sistema avisa 30 días antes.");
+    if (desde && hasta < desde) throw new ErrorForm("El vencimiento no puede ser antes del inicio de la vigencia.");
+    const archivo = fd.getAll("archivo").find((f): f is File => f instanceof File && f.size > 0);
+    if (archivo && archivo.size > MAX_BYTES) throw new ErrorForm("El archivo pesa más de 25 MB.");
+    let documentoId: string | null = null;
+    if (archivo) {
+      const g = await guardarArchivo(`proveedor/${proveedorId}`, archivo);
+      const [doc] = await db
+        .insert(documentos)
+        .values({ entidad: "proveedor", entidadId: proveedorId, tipo: `Certificado ${tipo}`, nombreArchivo: archivo.name, mime: g.mime, tamanoBytes: g.tamano, storageKey: g.key, sha256: g.sha256, subidoPor: nombreDe(u) })
+        .returning({ id: documentos.id });
+      documentoId = doc.id;
+    }
+    await db.insert(certificadosProveedor).values({
+      proveedorId,
+      tipo,
+      numero: txt(fd, "numero"),
+      emisor: txt(fd, "emisor"),
+      vigenteDesde: desde,
+      vigenteHasta: hasta,
+      recibido: hoy(),
+      documentoId,
+    });
+    await db.insert(notas).values({ entidad: "proveedor", entidadId: proveedorId, autor: nombreDe(u), texto: `Certificado ${tipo} registrado, vigente hasta ${hasta}.` });
+  } catch (e) {
+    return { error: mensajeDe(e) };
+  }
+  revalidatePath(`/proveedores/${proveedorId}`);
+  return { ok: true, mensaje: "Certificado registrado." };
+}
+
+export async function borrarCertificado(id: number): Promise<Resultado> {
+  let proveedorId: number | undefined;
+  try {
+    const u = await editor();
+    const [c] = await db.select().from(certificadosProveedor).where(eq(certificadosProveedor.id, id));
+    if (!c) return { error: "El certificado ya no existe." };
+    proveedorId = c.proveedorId;
+    await db.delete(certificadosProveedor).where(eq(certificadosProveedor.id, id));
+    if (c.documentoId) {
+      const [d] = await db.select().from(documentos).where(eq(documentos.id, c.documentoId));
+      if (d) {
+        await db.delete(documentos).where(eq(documentos.id, d.id));
+        await borrarArchivo(d.storageKey);
+      }
+    }
+    await db.insert(notas).values({ entidad: "proveedor", entidadId: c.proveedorId, autor: nombreDe(u), texto: `Certificado ${c.tipo}${c.numero ? " N° " + c.numero : ""} eliminado.` });
   } catch (e) {
     return { error: mensajeDe(e) };
   }

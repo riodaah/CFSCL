@@ -14,12 +14,11 @@ import {
   serial,
   text,
   timestamp,
-  unique,
   uuid,
 } from "drizzle-orm/pg-core";
 
 export const ORIGENES = ["Chile", "Perú", "Ecuador"] as const;
-export const REGIONES = ["Europa", "Medio Oriente", "Asia"] as const;
+export const REGIONES = ["Europa", "Norteamérica", "Medio Oriente", "Asia"] as const;
 export const PASOS_FERRADA = [
   "Orden de Ferrada",
   "Fruta comprada",
@@ -34,6 +33,8 @@ export const PASOS_FERRADA = [
 export const ROLES = ["admin", "operaciones", "lectura"] as const;
 export const TIPOS_NOTA = ["Nota", "Llamada", "Correo", "Agente"] as const;
 export const ENTIDADES = ["operacion", "proveedor", "ferrada"] as const;
+/** Exportadora: vende y despacha (ej. Agro Exportación Puma). Productor: dueño del campo. Planta de embalaje: donde se empaca (ej. Zeit Organisch). */
+export const TIPOS_PROVEEDOR = ["Exportadora", "Productor", "Planta de embalaje"] as const;
 
 export const origenPais = pgEnum("origen_pais", ORIGENES);
 export const region = pgEnum("region", REGIONES);
@@ -41,6 +42,7 @@ export const pasoFerrada = pgEnum("paso_ferrada", PASOS_FERRADA);
 export const rol = pgEnum("rol", ROLES);
 export const tipoNota = pgEnum("tipo_nota", TIPOS_NOTA);
 export const entidad = pgEnum("entidad", ENTIDADES);
+export const tipoProveedor = pgEnum("tipo_proveedor", TIPOS_PROVEEDOR);
 
 const creado = () => timestamp("creado_en", { withTimezone: true }).notNull().defaultNow();
 const actualizado = () =>
@@ -64,6 +66,7 @@ export const usuarios = pgTable("usuarios", {
 export const proveedores = pgTable("proveedores", {
   id: serial("id").primaryKey(),
   nombre: text("nombre").notNull(),
+  tipo: tipoProveedor("tipo").notNull().default("Exportadora"),
   pais: origenPais("pais").notNull(),
   ciudad: text("ciudad"),
   idTributario: text("id_tributario"), // RUT en Chile, RUC en Perú y Ecuador
@@ -95,6 +98,8 @@ export const operacionesFerrada = pgTable(
     fechaOrden: date("fecha_orden", { mode: "string" }).notNull(),
     origenPais: origenPais("origen_pais").notNull(),
     proveedorId: integer("proveedor_id").references(() => proveedores.id, { onDelete: "set null" }),
+    plantaId: integer("planta_id").references(() => proveedores.id, { onDelete: "set null" }), // planta de embalaje
+    consignatario: text("consignatario"), // cliente final de Ferrada en destino (ej. Schrijvershof B.V.)
     destinoId: integer("destino_id")
       .notNull()
       .references(() => destinos.id),
@@ -106,6 +111,8 @@ export const operacionesFerrada = pgTable(
     cajas: integer("cajas").notNull().default(0),
     compraUsdCaja: usd("compra_usd_caja"),
     ventaUsdCaja: usd("venta_usd_caja"),
+    anticipoUsdCaja: usd("anticipo_usd_caja"), // PO de Ferrada: USD por caja contra full set de documentos
+    precioMinimoUsdCaja: usd("precio_minimo_usd_caja"), // PO de Ferrada: precio FOB mínimo garantizado (vacío = "Open")
     comisionUsdCaja: usd("comision_usd_caja").notNull().default(0.5),
     rebateUsdContenedor: usd("rebate_usd_contenedor").notNull().default(0),
     paso: pasoFerrada("paso").notNull().default("Orden de Ferrada"),
@@ -113,6 +120,7 @@ export const operacionesFerrada = pgTable(
     ocProveedor: text("oc_proveedor"), // número de la orden de CFSCL al proveedor
     naviera: text("naviera"),
     booking: text("booking"),
+    bl: text("bl"), // número de BL (o del draft mientras no se emite el definitivo)
     barco: text("barco"),
     numerosContenedor: text("numeros_contenedor"),
     etd: date("etd", { mode: "string" }),
@@ -149,7 +157,7 @@ export const documentos = pgTable(
   (t) => [index("documentos_entidad_idx").on(t.entidad, t.entidadId)],
 );
 
-/** Certificados que se piden al proveedor una vez al año (valen de enero a diciembre). */
+/** Certificados del proveedor o de la planta (GlobalG.A.P., GRASP, HACCP, BRCGS, SENASA...). Cada uno con su vigencia. */
 export const certificadosProveedor = pgTable(
   "certificados_proveedor",
   {
@@ -158,12 +166,16 @@ export const certificadosProveedor = pgTable(
       .notNull()
       .references(() => proveedores.id, { onDelete: "cascade" }),
     tipo: text("tipo").notNull(),
-    anio: integer("anio").notNull(),
+    numero: text("numero"),
+    emisor: text("emisor"), // organismo certificador
+    vigenteDesde: date("vigente_desde", { mode: "string" }),
+    vigenteHasta: date("vigente_hasta", { mode: "string" }),
+    anio: integer("anio"), // obsoleto: se reemplaza por la vigencia
     recibido: date("recibido", { mode: "string" }),
     documentoId: uuid("documento_id").references(() => documentos.id, { onDelete: "set null" }),
     creadoEn: creado(),
   },
-  (t) => [unique("cert_proveedor_tipo_anio").on(t.proveedorId, t.tipo, t.anio)],
+  (t) => [index("cert_proveedor_idx").on(t.proveedorId)],
 );
 
 /** Registro de gestión (bitácora). entidadId nulo = nota general de Ferrada. */
@@ -198,5 +210,6 @@ export type OperacionFerrada = typeof operacionesFerrada.$inferSelect;
 export type Documento = typeof documentos.$inferSelect;
 export type Certificado = typeof certificadosProveedor.$inferSelect;
 export type Nota = typeof notas.$inferSelect;
+export type TipoProveedor = (typeof TIPOS_PROVEEDOR)[number];
 export type PasoFerrada = (typeof PASOS_FERRADA)[number];
 export type Entidad = (typeof ENTIDADES)[number];

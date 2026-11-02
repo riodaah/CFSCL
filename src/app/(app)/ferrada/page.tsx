@@ -17,7 +17,7 @@ export default async function Ferrada({ searchParams }: { searchParams: Promise<
   const [u, todas, destinos, proveedores, p, notas] = await Promise.all([usuarioActual(), listaOperaciones(), listaDestinos(), listaProveedores(), getParams(), notasDe("ferrada", null)]);
   const dest = new Map(destinos.map((d) => [d.id, d]));
   const prov = new Map(proveedores.map((x) => [x.id, x.nombre]));
-  const dias = { desde: p.dias_pago2_desde ?? 5, hasta: p.dias_pago2_hasta ?? 10 };
+  const dias = { desde: p.dias_pago2_desde ?? 15, hasta: p.dias_pago2_hasta ?? 20 };
   const meta = p.meta_semanal_destino ?? 2;
 
   const filtradas = todas.filter((o) => origen === "Todos" || o.origenPais === origen);
@@ -40,7 +40,7 @@ export default async function Ferrada({ searchParams }: { searchParams: Promise<
       <PageHeader
         etapa="Ferrada · importador europeo"
         titulo="Operaciones de Ferrada"
-        subtitulo="CFSCL busca la fruta en Chile, Perú y Ecuador, la compra por contenedor completo y la despacha a Europa, Medio Oriente y Asia."
+        subtitulo="CFSCL busca la fruta en Chile, Perú y Ecuador para Ferrada y sigue cada contenedor hasta el pago. Una operación es un contenedor."
         acciones={u.rol !== "lectura" && <Link href="/ferrada/nueva" className="btn-primary hidden lg:inline-flex"><Plus size={15} /> Nueva operación</Link>}
       />
       {u.rol !== "lectura" && todas.length > 0 && <Fab href="/ferrada/nueva" label="Nueva operación"><Plus size={20} /> Nueva</Fab>}
@@ -105,7 +105,7 @@ export default async function Ferrada({ searchParams }: { searchParams: Promise<
       <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
         <div className="min-w-0">
           {todas.length > 0 && (
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-2">
               {REGIONES.map((reg) => {
                 const lista = activas.filter((o) => dest.get(o.destinoId)?.region === reg);
                 return (

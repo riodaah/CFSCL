@@ -3,7 +3,7 @@ import clsx from "clsx";
 import { AlertTriangle, ArrowRight, CircleAlert, Info } from "lucide-react";
 import { PageHeader, Section, Stat } from "@/components/ui";
 import { getParams, listaDestinos, listaOperaciones, listaProveedores, todosLosCertificados } from "@/lib/datos";
-import { ganancia, hoy, pagos, semanaDe, setOficialBloqueado, TIPOS_CERTIFICADO } from "@/lib/ferrada";
+import { ganancia, hoy, pagos, resumenCertificados, semanaDe, setOficialBloqueado } from "@/lib/ferrada";
 import { fechaLarga, usd } from "@/lib/format";
 import { usuarioActual, nombreDe } from "@/lib/auth";
 
@@ -11,9 +11,8 @@ type Alerta = { nivel: "alta" | "media" | "info"; titulo: string; detalle: strin
 
 export default async function Inicio() {
   const [u, ops, provs, dests, certs, p] = await Promise.all([usuarioActual(), listaOperaciones(), listaProveedores(), listaDestinos(), todosLosCertificados(), getParams()]);
-  const dias = { desde: p.dias_pago2_desde ?? 5, hasta: p.dias_pago2_hasta ?? 10 };
+  const dias = { desde: p.dias_pago2_desde ?? 15, hasta: p.dias_pago2_hasta ?? 20 };
   const activas = ops.filter((o) => o.paso !== "Cerrada");
-  const anio = Number(hoy().slice(0, 4));
   const alertas: Alerta[] = [];
 
   for (const o of activas) {
@@ -27,10 +26,15 @@ export default async function Inicio() {
     if (o.ventaUsdCaja == null && o.compraUsdCaja != null) alertas.push({ nivel: "info", titulo: `Sin precio de venta · ${t}`, detalle: "La ganancia solo considera comisión y rebate.", href: `/ferrada/${o.id}/editar` });
   }
 
-  const conOps = new Set(activas.map((o) => o.proveedorId).filter(Boolean));
+  // Certificados del proveedor y de la planta de cada operación activa
+  const conOps = new Set(activas.flatMap((o) => [o.proveedorId, o.plantaId]).filter(Boolean));
   for (const pr of provs.filter((x) => conOps.has(x.id))) {
-    const faltan = TIPOS_CERTIFICADO.filter((t) => !certs.some((c) => c.proveedorId === pr.id && c.anio === anio && c.tipo === t && c.recibido));
-    if (faltan.length) alertas.push({ nivel: "media", titulo: `Certificados ${anio} incompletos · ${pr.nombre}`, detalle: `Faltan: ${faltan.join(", ")}.`, href: `/proveedores/${pr.id}` });
+    const { lista } = resumenCertificados(pr.tipo, certs.filter((c) => c.proveedorId === pr.id));
+    for (const x of lista) {
+      if (x.estado === "Falta") alertas.push({ nivel: "media", titulo: `Falta certificado ${x.tipo} · ${pr.nombre}`, detalle: "Ferrada lo exige para la operación.", href: `/proveedores/${pr.id}` });
+      if (x.estado === "Vencido") alertas.push({ nivel: "alta", titulo: `Certificado ${x.tipo} vencido · ${pr.nombre}`, detalle: `Venció el ${fechaLarga(x.cert!.vigenteHasta!)}. Pedir el nuevo.`, href: `/proveedores/${pr.id}` });
+      if (x.estado === "Por vencer") alertas.push({ nivel: "media", titulo: `Certificado ${x.tipo} vence en ${x.dias} días · ${pr.nombre}`, detalle: `Vence el ${fechaLarga(x.cert!.vigenteHasta!)}. Pedir la renovación.`, href: `/proveedores/${pr.id}` });
+    }
   }
 
   if (ops.length) {

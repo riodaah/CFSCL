@@ -90,20 +90,33 @@ export function FormOperacion({
         <Campo label="Proveedor" ayuda="Si no está en la lista, créalo en Proveedores">
           <select name="proveedorId" defaultValue={v(o?.proveedorId)} className="input">
             <option value="">Por buscar</option>
-            {proveedores.filter((p) => p.activo || p.id === o?.proveedorId).map((p) => (
+            {proveedores.filter((p) => p.tipo !== "Planta de embalaje" && (p.activo || p.id === o?.proveedorId)).map((p) => (
               <option key={p.id} value={p.id}>{p.nombre} · {p.pais}</option>
+            ))}
+          </select>
+        </Campo>
+        <Campo label="Planta de embalaje">
+          <select name="plantaId" defaultValue={v(o?.plantaId)} className="input">
+            <option value="">Sin indicar</option>
+            {proveedores.filter((p) => p.tipo === "Planta de embalaje" && (p.activo || p.id === o?.plantaId)).map((p) => (
+              <option key={p.id} value={p.id}>{p.nombre}</option>
             ))}
           </select>
         </Campo>
         <Campo label="N° orden CFSCL al proveedor">
           <input name="ocProveedor" defaultValue={v(o?.ocProveedor)} className="input" />
         </Campo>
-        <div className="hidden xl:block" />
         <Campo label="Compra (US$/caja)" ayuda="Lo que paga CFSCL al proveedor">
           <input name="compraUsdCaja" inputMode="decimal" defaultValue={v(o?.compraUsdCaja)} className="input" />
         </Campo>
         <Campo label="Venta (US$/caja)" ayuda="Lo que paga Ferrada. Vacío si solo hay comisión">
           <input name="ventaUsdCaja" inputMode="decimal" defaultValue={v(o?.ventaUsdCaja)} className="input" />
+        </Campo>
+        <Campo label="Anticipo de Ferrada (US$/caja)" ayuda="Lo que paga contra el full set de documentos">
+          <input name="anticipoUsdCaja" inputMode="decimal" defaultValue={v(o?.anticipoUsdCaja)} className="input" />
+        </Campo>
+        <Campo label="Precio mínimo garantizado (US$/caja)" ayuda="FOB. Vacío si la orden dice «Open»">
+          <input name="precioMinimoUsdCaja" inputMode="decimal" defaultValue={v(o?.precioMinimoUsdCaja)} className="input" />
         </Campo>
         <Campo label="Comisión (US$/caja)">
           <input name="comisionUsdCaja" inputMode="decimal" required defaultValue={v(o?.comisionUsdCaja ?? params.comision_ferrada ?? 0.5)} className="input" />
@@ -116,13 +129,15 @@ export function FormOperacion({
       <Bloque titulo="Logística">
         <Campo label="Naviera"><input name="naviera" defaultValue={v(o?.naviera)} className="input" /></Campo>
         <Campo label="Booking"><input name="booking" defaultValue={v(o?.booking)} className="input font-mono" /></Campo>
+        <Campo label="N° de BL"><input name="bl" defaultValue={v(o?.bl)} className="input font-mono" /></Campo>
+        <Campo label="Consignatario" ayuda="Cliente de Ferrada en destino"><input name="consignatario" defaultValue={v(o?.consignatario)} className="input" /></Campo>
         <Campo label="Barco"><input name="barco" defaultValue={v(o?.barco)} className="input" /></Campo>
         <Campo label="Zarpe (ETD)"><input name="etd" type="date" defaultValue={v(o?.etd)} className="input" /></Campo>
         <Campo label="Llegada (ETA)"><input name="eta" type="date" defaultValue={v(o?.eta)} className="input" /></Campo>
-        <Campo label="N° de contenedores" ayuda="Separados por coma"><input name="numerosContenedor" defaultValue={v(o?.numerosContenedor)} className="input font-mono" /></Campo>
+        <Campo label="N° de contenedor" ayuda="Si son varios, separados por coma"><input name="numerosContenedor" defaultValue={v(o?.numerosContenedor)} className="input font-mono" /></Campo>
       </Bloque>
 
-      <Bloque titulo="Documentos y pagos" descripcion="50% contra el draft · 50% entre 5 y 10 días después de la llegada. El set oficial solo sale con el pago 1.">
+      <Bloque titulo="Documentos y pagos" descripcion="Anticipo contra el full set de documentos · saldo según cuenta de venta, 15 a 20 días después de la llegada. El set oficial solo sale con el pago 1.">
         <Campo label="Draft enviado"><input name="draftEnviado" type="date" defaultValue={v(o?.draftEnviado)} className="input" /></Campo>
         <Campo label="Pago 1 vence"><input name="pago1Vence" type="date" defaultValue={v(o?.pago1Vence)} className="input" /></Campo>
         <Campo label="Pago 1 recibido"><input name="pago1Pagado" type="date" defaultValue={v(o?.pago1Pagado)} className="input" /></Campo>

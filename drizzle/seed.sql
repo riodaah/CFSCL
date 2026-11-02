@@ -11,8 +11,8 @@ INSERT INTO parametros (clave, valor, etiqueta, unidad, nota) VALUES
   ('meta_semanal_destino', 2, 'Meta semanal por destino', 'contenedores', 'Contenedores que deben zarpar cada semana a cada destino'),
   ('pallets_por_contenedor', 21, 'Pallets por contenedor', 'pallets', 'Puede ser 20 según la fruta'),
   ('cajas_por_pallet', 49, 'Cajas por pallet', 'cajas', '21 pallets × 49 = 1.029 cajas por contenedor'),
-  ('dias_pago2_desde', 5, 'Pago 2 de Ferrada desde', 'días tras la llegada', NULL),
-  ('dias_pago2_hasta', 10, 'Pago 2 de Ferrada hasta', 'días tras la llegada', NULL)
+  ('dias_pago2_desde', 15, 'Pago 2 de Ferrada desde', 'días tras la llegada', 'Según la orden de compra de Ferrada'),
+  ('dias_pago2_hasta', 20, 'Pago 2 de Ferrada hasta', 'días tras la llegada', 'Según la orden de compra de Ferrada')
 ON CONFLICT (clave) DO NOTHING;
 
 -- Destinos sugeridos (editables en Configuración): uno por zona mencionada en la reunión 3

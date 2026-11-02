@@ -6,11 +6,12 @@ import { eliminarOperacion, registrarHito } from "@/app/acciones";
 import { Bitacora } from "@/components/bitacora";
 import { Documentos } from "@/components/documentos";
 import { BotonAccion } from "@/components/form-accion";
+import { CertificadosResumen } from "@/components/certificados";
 import { Badge, PageHeader, Section, Stat, TableWrap, type Tono } from "@/components/ui";
 import { PASOS_FERRADA } from "@/db/schema";
 import { usuarioActual } from "@/lib/auth";
 import { certificadosDe, documentosDe, getOperacion, getParams, getProveedor, listaDestinos, notasDe } from "@/lib/datos";
-import { ganancia, hoy, pagos, setOficialBloqueado, TIPOS_CERTIFICADO, TIPOS_DOC_OPERACION, transitoDias } from "@/lib/ferrada";
+import { FULL_SET_FERRADA, ganancia, pagos, setOficialBloqueado, TIPOS_DOC_OPERACION, transitoDias } from "@/lib/ferrada";
 import { fechaLarga, n, usd } from "@/lib/format";
 
 const TONO_PAGO: Record<string, Tono> = { Pagado: "verde", Pendiente: "gris", Vencido: "rojo", "Sin fecha": "gris" };
@@ -20,19 +21,19 @@ export default async function Operacion({ params }: { params: Promise<{ id: stri
   const id = Number((await params).id);
   const o = Number.isInteger(id) ? await getOperacion(id) : undefined;
   if (!o) notFound();
-  const [u, destinos, prov, docs, notas, p] = await Promise.all([
+  const [u, destinos, prov, planta, docs, notas, p] = await Promise.all([
     usuarioActual(),
     listaDestinos(),
     o.proveedorId ? getProveedor(o.proveedorId) : undefined,
+    o.plantaId ? getProveedor(o.plantaId) : undefined,
     documentosDe("operacion", o.id),
     notasDe("operacion", o.id),
     getParams(),
   ]);
-  const anio = Number(hoy().slice(0, 4));
-  const certs = prov ? await certificadosDe(prov.id) : [];
+  const [certs, certsPlanta] = await Promise.all([prov ? certificadosDe(prov.id) : [], planta ? certificadosDe(planta.id) : []]);
   const d = destinos.find((x) => x.id === o.destinoId)!;
   const g = ganancia(o);
-  const [p1, p2] = pagos(o, { desde: p.dias_pago2_desde ?? 5, hasta: p.dias_pago2_hasta ?? 10 });
+  const [p1, p2] = pagos(o, { desde: p.dias_pago2_desde ?? 15, hasta: p.dias_pago2_hasta ?? 20 });
   const idx = PASOS_FERRADA.indexOf(o.paso);
   const bloqueado = setOficialBloqueado(o);
   const transito = transitoDias(o);
@@ -104,7 +105,7 @@ export default async function Operacion({ params }: { params: Promise<{ id: stri
       {bloqueado && (
         <div className="mb-5 flex items-start gap-3 rounded-xl border border-brand-100 bg-brand-50 px-4 py-3 text-[14px] text-brand-700">
           <Lock size={18} className="mt-0.5 shrink-0" aria-hidden />
-          <div><b className="font-semibold">Set oficial bloqueado.</b> Ferrada tiene el draft desde el {fechaLarga(o.draftEnviado!)} y no ha pagado el primer 50% ({p1.texto.toLowerCase()}). Con el set oficial se retira el contenedor.</div>
+          <div><b className="font-semibold">Set oficial bloqueado.</b> Ferrada tiene el draft desde el {fechaLarga(o.draftEnviado!)} y no ha pagado el anticipo ({p1.texto.toLowerCase()}). Con el set oficial se retira el contenedor.</div>
         </div>
       )}
 
@@ -127,19 +128,16 @@ export default async function Operacion({ params }: { params: Promise<{ id: stri
                   {prov.telefono && <div className="mt-1 flex items-center gap-1.5 text-[13.5px] text-ink-700"><MessageCircle size={13} aria-hidden /> <a href={`https://wa.me/${prov.telefono.replace(/\D/g, "")}`} target="_blank" rel="noreferrer" className="text-leaf-700 underline-offset-2 hover:underline">{prov.telefono}</a></div>}
                   {prov.email && <div className="mt-1 flex items-center gap-1.5 text-[13.5px] text-ink-700"><Mail size={13} aria-hidden /> <a href={`mailto:${prov.email}`} className="break-all text-leaf-700 underline-offset-2 hover:underline">{prov.email}</a></div>}
                   {o.ocProveedor && <div className="mt-2 text-[12.5px] text-ink-500">Orden CFSCL al proveedor: <span className="font-mono">{o.ocProveedor}</span></div>}
-                  <h3 className="mt-4 text-[13px] font-semibold">Certificados {anio}</h3>
-                  <ul className="mt-1.5 space-y-1">
-                    {TIPOS_CERTIFICADO.map((t) => {
-                      const c = certs.find((x) => x.tipo === t && x.anio === anio);
-                      return (
-                        <li key={t} className="flex items-center gap-2 text-[13px]">
-                          {c?.recibido ? <CheckCircle2 size={15} className="text-leaf-500" /> : <CircleDashed size={15} className="text-brand-500" />}
-                          <span className="flex-1">{t}</span>
-                          <span className={clsx("text-[12px]", c?.recibido ? "text-ink-500" : "font-medium text-brand-600")}>{c?.recibido ? fechaLarga(c.recibido) : "Falta"}</span>
-                        </li>
-                      );
-                    })}
-                  </ul>
+                  <h3 className="mt-4 text-[13px] font-semibold">Certificados del proveedor</h3>
+                  <div className="mt-1.5"><CertificadosResumen proveedor={prov} certs={certs} /></div>
+                  {planta && (
+                    <>
+                      <h3 className="mt-4 text-[13px] font-semibold">
+                        Planta de embalaje: <Link href={`/proveedores/${planta.id}`} className="font-semibold text-leaf-700 hover:underline">{planta.nombre}</Link>
+                      </h3>
+                      <div className="mt-1.5"><CertificadosResumen proveedor={planta} certs={certsPlanta} /></div>
+                    </>
+                  )}
                 </>
               ) : (
                 <p className="text-[13.5px] text-amber-800">Proveedor por buscar en {o.origenPais}.</p>
@@ -150,12 +148,14 @@ export default async function Operacion({ params }: { params: Promise<{ id: stri
                 {[
                   ["Naviera", o.naviera],
                   ["Booking", o.booking],
+                  ["BL", o.bl],
                   ["Barco", o.barco],
                   ["Zarpe (ETD)", o.etd && fechaLarga(o.etd)],
                   ["Llegada (ETA)", o.eta && fechaLarga(o.eta)],
                   ["Tránsito", transito != null && `${transito} días`],
-                  ["Contenedores", o.numerosContenedor],
+                  ["Contenedor", o.numerosContenedor],
                   ["Destino", `${d.puerto}, ${d.pais}`],
+                  ["Consignatario", o.consignatario],
                 ].map(([k, val]) => (
                   <div key={k as string} className="flex justify-between gap-3">
                     <dt className="text-ink-500">{k}</dt>
@@ -173,7 +173,9 @@ export default async function Operacion({ params }: { params: Promise<{ id: stri
               </thead>
               <tbody>
                 <tr className="border-b border-ink-100"><td className="td">Compra al proveedor</td><td className="td text-right">{usd2(o.compraUsdCaja)}</td><td className="td text-right">{g.compra != null ? usd(g.compra) : "—"}</td></tr>
-                <tr className="border-b border-ink-100"><td className="td">Venta a Ferrada</td><td className="td text-right">{usd2(o.ventaUsdCaja)}</td><td className="td text-right">{g.venta != null ? usd(g.venta) : "—"}</td></tr>
+                <tr className="border-b border-ink-100"><td className="td">Anticipo de Ferrada (contra documentos)</td><td className="td text-right">{usd2(o.anticipoUsdCaja)}</td><td className="td text-right">{o.anticipoUsdCaja != null ? usd(o.anticipoUsdCaja * o.cajas) : "—"}</td></tr>
+                <tr className="border-b border-ink-100"><td className="td">Precio mínimo garantizado (FOB)</td><td className="td text-right">{o.precioMinimoUsdCaja != null ? usd2(o.precioMinimoUsdCaja) : "Open"}</td><td className="td text-right">{o.precioMinimoUsdCaja != null ? usd(o.precioMinimoUsdCaja * o.cajas) : "Según venta"}</td></tr>
+                <tr className="border-b border-ink-100"><td className="td">Venta a Ferrada (final)</td><td className="td text-right">{usd2(o.ventaUsdCaja)}</td><td className="td text-right">{g.venta != null ? usd(g.venta) : "—"}</td></tr>
                 <tr className="border-b border-ink-100"><td className="td">Comisión</td><td className="td text-right">{usd2(o.comisionUsdCaja)}</td><td className="td text-right">{usd(g.comision)}</td></tr>
                 <tr className="border-b border-ink-100"><td className="td">Rebate de la naviera</td><td className="td text-right">—</td><td className="td text-right">{usd(g.rebate)}</td></tr>
                 <tr className="bg-ink-50"><td className="td font-semibold">Ganancia CFSCL</td><td className="td" /><td className="td text-right font-semibold text-leaf-700">{usd(g.total)}</td></tr>
@@ -181,12 +183,12 @@ export default async function Operacion({ params }: { params: Promise<{ id: stri
             </TableWrap>
           </Section>
 
-          <Section titulo="Pagos de Ferrada" descripcion="50% contra el draft · 50% tras la llegada" sinPadding>
+          <Section titulo="Pagos de Ferrada" descripcion={`Anticipo contra el full set de documentos · saldo según cuenta de venta, ${p.dias_pago2_desde ?? 15} a ${p.dias_pago2_hasta ?? 20} días después de la llegada`} sinPadding>
             <ul className="divide-y divide-ink-100">
-              {([["Pago 1 · contra draft", p1], ["Pago 2 · tras la llegada", p2]] as const).map(([t, pp]) => (
+              {([["Pago 1 · anticipo", p1], ["Pago 2 · saldo", p2]] as const).map(([t, pp]) => (
                 <li key={t} className={clsx("grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-0.5 px-4 py-3 sm:grid-cols-[1.3fr_1fr_1.4fr_auto]", pp.estado === "Vencido" && "bg-brand-50/60")}>
                   <span className="text-[14px] font-medium">{t}</span>
-                  <span className="text-right text-[14px] font-semibold tabular-nums sm:order-none">{pp.monto != null ? usd(pp.monto) : "Sin precio"}</span>
+                  <span className="text-right text-[14px] font-semibold tabular-nums sm:order-none">{pp.monto != null ? usd(pp.monto) : t === "Pago 2 · saldo" ? "Según venta" : "Sin precio"}</span>
                   <span className="text-[13px] text-ink-500 sm:text-[14px] sm:text-ink-700">{pp.texto}</span>
                   <span className="justify-self-end"><Badge tono={TONO_PAGO[pp.estado]}>{pp.estado}</Badge></span>
                 </li>
@@ -196,15 +198,18 @@ export default async function Operacion({ params }: { params: Promise<{ id: stri
 
           <Documentos entidad="operacion" entidadId={o.id} docs={docs} tipos={TIPOS_DOC_OPERACION} puedeEditar={edita} />
           <div className="card p-4">
-            <h3 className="text-[13px] font-semibold">Checklist de documentos</h3>
-            <ul className="mt-2 grid gap-1.5 sm:grid-cols-2">
-              {TIPOS_DOC_OPERACION.filter((t) => t !== "Otro").map((t) => (
-                <li key={t} className="flex items-center gap-2 text-[13px]">
+            <h3 className="text-[13px] font-semibold">Full set que exige Ferrada para pagar el anticipo</h3>
+            <p className="mt-0.5 text-[12.5px] text-ink-500">BL, certificado de origen, fitosanitario, packing list, factura y cold treatment. Antes de enviar originales se mandan copias a revisión.</p>
+            <ul className="mt-2.5 grid gap-1.5 sm:grid-cols-2">
+              {FULL_SET_FERRADA.map((t) => (
+                <li key={t} className="flex items-center gap-2 text-[13.5px]">
                   {tiposCargados.has(t) ? <CheckCircle2 size={15} className="text-leaf-500" /> : <CircleDashed size={15} className="text-ink-300" />}
                   <span className={tiposCargados.has(t) ? "" : "text-ink-500"}>{t}</span>
+                  {t === "BL" && !tiposCargados.has("BL") && tiposCargados.has("Draft de BL") && <span className="text-[12px] text-amber-700">· hay draft</span>}
                 </li>
               ))}
             </ul>
+            <p className="mt-3 text-[12.5px] text-ink-500">{FULL_SET_FERRADA.filter((t) => tiposCargados.has(t)).length} de {FULL_SET_FERRADA.length} listos</p>
           </div>
 
           {o.notas && (

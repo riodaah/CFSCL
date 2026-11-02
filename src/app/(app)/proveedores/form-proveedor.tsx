@@ -1,5 +1,5 @@
 import { Campo, FormAccion } from "@/components/form-accion";
-import { ORIGENES, type Proveedor } from "@/db/schema";
+import { ORIGENES, TIPOS_PROVEEDOR, type Proveedor } from "@/db/schema";
 import type { Resultado } from "@/lib/form";
 
 const v = (x: unknown) => (x == null ? "" : String(x));
@@ -10,6 +10,11 @@ export function FormProveedor({ action, p }: { action: (prev: Resultado, fd: For
       <div className="card grid gap-4 p-4 sm:grid-cols-2 sm:p-5 xl:grid-cols-3">
         <Campo label="Nombre o razón social" className="sm:col-span-2">
           <input name="nombre" required defaultValue={v(p?.nombre)} className="input" />
+        </Campo>
+        <Campo label="Tipo" ayuda="Exportadora: vende y despacha. Planta: donde se embala.">
+          <select name="tipo" required defaultValue={p?.tipo ?? "Exportadora"} className="input">
+            {TIPOS_PROVEEDOR.map((x) => <option key={x}>{x}</option>)}
+          </select>
         </Campo>
         <Campo label="País">
           <select name="pais" required defaultValue={p?.pais ?? "Perú"} className="input">

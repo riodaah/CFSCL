@@ -75,7 +75,8 @@ Cloud Run solo admite dominio propio en algunas regiones (no en São Paulo); por
 2. `bash deploy/gcp.sh dominio` y crear en el DNS el registro que imprime (CNAME `sistema` → `ghs.googlehosted.com.`).
 3. El certificado HTTPS se emite solo en 15 minutos a unas horas.
 
-- Para actualizar después de cambios: `git pull && bash deploy/gcp.sh deploy`.
+- Para actualizar después de cambios: `git pull && bash deploy/gcp.sh deploy` (aplica antes las migraciones de base de datos).
+- Primer trato de Ferrada: `bash deploy/gcp.sh cargar "<carpeta con los 20 PDF>"` (una vez `gcloud auth application-default login`). Ver `scripts/cargar-trato-ferrada.ts`.
 - Para cargar o cambiar las credenciales de Google: `bash deploy/gcp.sh google`.
 
 ### 4. Alerta de presupuesto (recomendado)
