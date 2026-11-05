@@ -27,6 +27,17 @@ export default async function Ferrada({ searchParams }: { searchParams: Promise<
   const sum = (k: "comision" | "margen" | "rebate" | "total") => g.reduce((a, x) => a + x[k], 0);
   const porCobrar = filtradas.flatMap((o) => pagos(o, dias)).filter((x) => x.estado !== "Pagado").reduce((a, x) => a + (x.monto ?? 0), 0);
 
+  // Contenedores de una misma orden de Ferrada: "1 de 2", "2 de 2"
+  const porOrden = new Map<string, OperacionFerrada[]>();
+  for (const o of [...todas].sort((a, b) => a.codigo.localeCompare(b.codigo))) {
+    if (!o.ocFerrada) continue;
+    porOrden.set(o.ocFerrada, [...(porOrden.get(o.ocFerrada) ?? []), o]);
+  }
+  const posicion = (o: OperacionFerrada) => {
+    const g = o.ocFerrada ? porOrden.get(o.ocFerrada) : undefined;
+    return g ? { i: g.indexOf(o) + 1, total: g.length } : undefined;
+  };
+
   const { lunes, domingo } = semanaDe();
   const metaSemana = destinos
     .filter((d) => d.activo)
@@ -115,7 +126,7 @@ export default async function Ferrada({ searchParams }: { searchParams: Promise<
                       <span className="rounded-full bg-white px-2 text-[12px] tabular-nums text-ink-500">{lista.length}</span>
                     </div>
                     <div className="flex flex-col gap-2.5">
-                      {lista.map((o) => <Tarjeta key={o.id} o={o} d={dest.get(o.destinoId)!} proveedor={o.proveedorId ? prov.get(o.proveedorId) : undefined} dias={dias} />)}
+                      {lista.map((o) => <Tarjeta key={o.id} o={o} d={dest.get(o.destinoId)!} proveedor={o.proveedorId ? prov.get(o.proveedorId) : undefined} dias={dias} pos={posicion(o)} />)}
                       {lista.length === 0 && <div className="rounded-lg border border-dashed border-ink-300 px-3 py-6 text-center text-[12px] text-ink-400">Sin operaciones activas</div>}
                     </div>
                   </div>
@@ -132,7 +143,7 @@ export default async function Ferrada({ searchParams }: { searchParams: Promise<
                     <Link href={`/ferrada/${o.id}`} className="flex items-center gap-3 px-4 py-3 active:bg-ink-50">
                       <div className="min-w-0 flex-1">
                         <div className="text-[14.5px] font-medium">{o.producto} {o.variedad}</div>
-                        <div className="text-[12.5px] text-ink-500"><span className="font-mono">{o.codigo}</span> · {dest.get(o.destinoId)?.puerto} · {o.contenedores} cont.</div>
+                        <div className="text-[12.5px] text-ink-500"><span className="font-mono">{o.codigo}</span> · {dest.get(o.destinoId)?.puerto} {o.numerosContenedor ? ` · ${o.numerosContenedor}` : ""}</div>
                       </div>
                       <div className="text-right text-[14px] font-semibold text-leaf-700">{usd(ganancia(o).total)}</div>
                     </Link>
@@ -166,7 +177,7 @@ export default async function Ferrada({ searchParams }: { searchParams: Promise<
   );
 }
 
-function Tarjeta({ o, d, proveedor, dias }: { o: OperacionFerrada; d: Destino; proveedor?: string; dias: { desde: number; hasta: number } }) {
+function Tarjeta({ o, d, proveedor, dias, pos }: { o: OperacionFerrada; d: Destino; proveedor?: string; dias: { desde: number; hasta: number }; pos?: { i: number; total: number } }) {
   const [p1, p2] = pagos(o, dias);
   const k = PASOS_FERRADA.indexOf(o.paso);
   const bloqueado = setOficialBloqueado(o);
@@ -179,7 +190,15 @@ function Tarjeta({ o, d, proveedor, dias }: { o: OperacionFerrada; d: Destino; p
       <div className="mt-1.5 text-[14.5px] font-semibold leading-snug">{o.producto} {o.variedad}</div>
       <div className="text-[12.5px] text-ink-500">{proveedor ?? "Proveedor por buscar"}</div>
       <div className="mt-1.5 text-[12.5px] text-ink-600">
-        <span className="font-semibold text-ink-900">{d.puerto}</span> · {o.contenedores} cont. · {n(o.cajas)} cajas
+        <span className="font-semibold text-ink-900">{d.puerto}</span> · {n(o.cajas)} cajas
+      </div>
+      {o.ocFerrada && (
+        <div className="mt-0.5 text-[12px] text-ink-600">
+          Orden <span className="font-mono">{o.ocFerrada}</span>{pos && pos.total > 1 ? ` · contenedor ${pos.i} de ${pos.total}` : ""}
+        </div>
+      )}
+      <div className="mt-0.5 font-mono text-[12px] text-ink-500">
+        {o.numerosContenedor ?? "Contenedor por asignar"}{o.bl ? ` · BL ${o.bl}` : ""}
       </div>
       {o.etd && <div className="mt-0.5 text-[12px] text-ink-500">ETD {fecha(o.etd)}{o.eta ? ` · ETA ${fecha(o.eta)}` : ""}</div>}
       <div className="mt-2.5">
