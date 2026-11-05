@@ -2,8 +2,8 @@ import Image from "next/image";
 import { BotonGoogle } from "./boton-google";
 
 const ERRORES: Record<string, string> = {
-  NoAutorizado: "Tu cuenta de Google no está autorizada. Pide acceso a un administrador.",
-  AccessDenied: "Tu cuenta de Google no está autorizada. Pide acceso a un administrador.",
+  NoAutorizado: "Tu cuenta de Google no está autorizada. Entra con tu correo @cfscl.cl o pide acceso a un administrador.",
+  AccessDenied: "Tu cuenta de Google no está autorizada. Entra con tu correo @cfscl.cl o pide acceso a un administrador.",
 };
 
 export default async function Login({ searchParams }: { searchParams: Promise<{ error?: string; callbackUrl?: string }> }) {

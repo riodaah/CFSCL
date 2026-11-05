@@ -6,12 +6,18 @@ import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { usuarios, type Usuario } from "@/db/schema";
 
-// Solo entran los correos registrados y activos en la tabla usuarios.
-// ADMIN_EMAILS (separados por coma) se crean como admin en su primer ingreso.
-const ADMINS = (process.env.ADMIN_EMAILS ?? "")
-  .split(",")
-  .map((e) => e.trim().toLowerCase())
-  .filter(Boolean);
+// Entran: los correos registrados y activos en la tabla usuarios, y cualquier cuenta
+// de los dominios autorizados (ALLOWED_DOMAINS, por defecto cfscl.cl), que se crea
+// con rol "operaciones" en su primer ingreso. Un usuario desactivado queda bloqueado
+// aunque sea del dominio. ADMIN_EMAILS (separados por coma) se crean como admin.
+const lista = (v: string | undefined) =>
+  (v ?? "")
+    .split(",")
+    .map((e) => e.trim().toLowerCase().replace(/^@/, ""))
+    .filter(Boolean);
+const ADMINS = lista(process.env.ADMIN_EMAILS);
+export const DOMINIOS = lista(process.env.ALLOWED_DOMAINS ?? "cfscl.cl");
+const delDominio = (email: string) => DOMINIOS.some((d) => email.endsWith(`@${d}`));
 
 export const DEV_BYPASS = process.env.AUTH_DEV_BYPASS === "1" && process.env.NODE_ENV !== "production";
 
@@ -28,12 +34,19 @@ export const authOptions: NextAuthOptions = {
   useSecureCookies: process.env.NODE_ENV === "production",
   pages: { signIn: "/login", error: "/login" },
   callbacks: {
-    async signIn({ user }) {
+    async signIn({ user, profile }) {
       const email = user.email?.toLowerCase();
       if (!email) return false;
+      // Google confirma que el correo es de esa cuenta
+      if ((profile as { email_verified?: boolean } | undefined)?.email_verified === false) return "/login?error=NoAutorizado";
       let [u] = await db.select().from(usuarios).where(eq(usuarios.email, email));
-      if (!u && ADMINS.includes(email)) {
-        [u] = await db.insert(usuarios).values({ email, nombre: user.name, rol: "admin" }).returning();
+      if (!u && (ADMINS.includes(email) || delDominio(email))) {
+        [u] = await db
+          .insert(usuarios)
+          .values({ email, nombre: user.name, rol: ADMINS.includes(email) ? "admin" : "operaciones" })
+          .onConflictDoNothing()
+          .returning();
+        if (!u) [u] = await db.select().from(usuarios).where(eq(usuarios.email, email));
       }
       if (!u || !u.activo) return "/login?error=NoAutorizado";
       await db

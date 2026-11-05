@@ -15,6 +15,13 @@
       "when": 1793642130179,
       "tag": "0001_documentos_reales",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793900000000,
+      "tag": "0002_dominio_cfscl",
+      "breakpoints": true
     }
   ]
 }

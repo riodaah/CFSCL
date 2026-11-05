@@ -24,7 +24,8 @@ DOMINIO="${DOMINIO:-sistema.cfscl.cl}"      # dirección pública de la app
 SA_NAME="cfscl-app"
 SA="${SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
 # Separados por coma: se pasan a Cloud Run con delimitador "|" para no romper la lista
-ADMIN_EMAILS="${ADMIN_EMAILS:-da.morande@gmail.com,francisco@cfs.cl}"
+ADMIN_EMAILS="${ADMIN_EMAILS:-da.morande@gmail.com,francisco@cfscl.cl}"
+ALLOWED_DOMAINS="${ALLOWED_DOMAINS:-cfscl.cl}"   # cualquier cuenta @cfscl.cl entra con rol operaciones
 IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}/app"
 
 gcloud config set project "$PROJECT_ID" >/dev/null
@@ -125,7 +126,7 @@ deploy() {
     --min-instances=0 --max-instances=3 \
     --concurrency=40 --timeout=120 \
     --cpu-boost \
-    --set-env-vars="^|^GCS_BUCKET=${BUCKET}|ADMIN_EMAILS=${ADMIN_EMAILS}|AUTH_TRUST_HOST=true" \
+    --set-env-vars="^|^GCS_BUCKET=${BUCKET}|ADMIN_EMAILS=${ADMIN_EMAILS}|ALLOWED_DOMAINS=${ALLOWED_DOMAINS}|AUTH_TRUST_HOST=true" \
     --set-secrets="DATABASE_URL=DATABASE_URL:latest,NEXTAUTH_SECRET=NEXTAUTH_SECRET:latest,GOOGLE_CLIENT_ID=GOOGLE_CLIENT_ID:latest,GOOGLE_CLIENT_SECRET=GOOGLE_CLIENT_SECRET:latest,API_KEY=API_KEY:latest"
 
   local run_url

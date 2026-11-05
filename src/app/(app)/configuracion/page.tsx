@@ -2,7 +2,7 @@ import { cambiarDestino, cambiarUsuario, crearDestino, crearUsuario, guardarPara
 import { BotonAccion, Campo, FormAccion } from "@/components/form-accion";
 import { Badge, PageHeader, Section } from "@/components/ui";
 import { REGIONES, ROLES } from "@/db/schema";
-import { usuarioActual } from "@/lib/auth";
+import { DOMINIOS, usuarioActual } from "@/lib/auth";
 import { listaDestinos, listaParametros, listaUsuarios } from "@/lib/datos";
 
 const ROL = { admin: "Administrador", operaciones: "Operaciones", lectura: "Solo lectura" } as const;
@@ -16,7 +16,7 @@ export default async function Configuracion() {
       <PageHeader etapa="Control" titulo="Configuración" subtitulo={esAdmin ? "Usuarios, destinos y parámetros de negocio." : "Solo un administrador puede cambiar esta sección."} />
 
       <div className="grid gap-5 xl:grid-cols-2">
-        <Section titulo="Usuarios" descripcion="Entran con su cuenta de Google. Solo los correos de esta lista tienen acceso." sinPadding>
+        <Section titulo="Usuarios" descripcion={`Entran con su cuenta de Google. Cualquier cuenta ${DOMINIOS.map((d) => "@" + d).join(", ")} entra sola con rol operaciones; aquí se cambia el rol o se desactiva. Otros correos se autorizan abajo.`} sinPadding>
           <ul className="divide-y divide-ink-100">
             {usuarios.map((x) => (
               <li key={x.id} className="px-4 py-3">

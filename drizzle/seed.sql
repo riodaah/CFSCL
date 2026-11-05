@@ -2,7 +2,7 @@
 
 INSERT INTO usuarios (email, nombre, rol) VALUES
   ('da.morande@gmail.com', 'Dario Morandé', 'admin'),
-  ('francisco@cfs.cl', 'Francisco Padilla', 'admin')
+  ('francisco@cfscl.cl', 'Francisco Padilla', 'admin')
 ON CONFLICT (email) DO NOTHING;
 
 INSERT INTO parametros (clave, valor, etiqueta, unidad, nota) VALUES
